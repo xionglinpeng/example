@@ -3,12 +3,10 @@ package com.example.activemq.topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
-import java.util.UUID;
 
-public class TopicSender {
+public class TopicNoNPersistentReceiver {
 
     public static void main(String[] args) throws JMSException{
-
         ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
 
         Connection connection = factory.createConnection();
@@ -16,17 +14,17 @@ public class TopicSender {
 
         Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
-
         Destination destination = session.createTopic("TEXT-TOPIC-NON-PERSISTENT-1");
 
-        MessageProducer producer = session.createProducer(destination);
+        MessageConsumer consumer = session.createConsumer(destination);
 
-        TextMessage message = session.createTextMessage(UUID.randomUUID().toString());
-
-        producer.send(message);
-
-        session.commit();
+        TextMessage message = (TextMessage) consumer.receive();
+        while (message != null){
+            System.out.println(message.getText());
+            message = (TextMessage)consumer.receive();
+        }
         session.close();
         connection.close();
+
     }
 }
