@@ -14,7 +14,7 @@ public class TopicReceiver {
 
         Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
-        Destination destination = session.createTopic("TEXT-TOPIC-PERSISTENT-1");
+        Destination destination = session.createTopic("TEXT-TOPIC-NON-PERSISTENT-1");
 
         MessageConsumer consumer = session.createConsumer(destination);
 

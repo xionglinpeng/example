@@ -17,7 +17,7 @@ public class TopicSender {
         Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
 
-        Destination destination = session.createTopic("TEXT-TOPIC-PERSISTENT-1");
+        Destination destination = session.createTopic("TEXT-TOPIC-NON-PERSISTENT-1");
 
         MessageProducer producer = session.createProducer(destination);
 
