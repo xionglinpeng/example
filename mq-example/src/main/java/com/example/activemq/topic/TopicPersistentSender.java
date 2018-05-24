@@ -15,13 +15,18 @@ public class TopicPersistentSender {
 
         Connection connection = factory.createConnection();
 
-        connection.start();
-
         Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
-        Destination destination = session.createTopic("TEXT-TOPIC-PERSISTENT-1");
+        Topic destination = session.createTopic("TEXT-TOPIC-PERSISTENT-1");
 
         MessageProducer producer = session.createProducer(destination);
+
+        //数据结果是2，即默认是持久化的
+        System.out.println(producer.getDeliveryMode());
+        //设置持久化
+        producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+
+        connection.start();
 
         MapMessage mapMessage = session.createMapMessage();
         mapMessage.setBoolean("status",true);
@@ -29,5 +34,10 @@ public class TopicPersistentSender {
         mapMessage.setString("msg","success");
 
         producer.send(mapMessage);
+
+        session.commit();
+        session.close();
+        connection.close();
+
     }
 }
