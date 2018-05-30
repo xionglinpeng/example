@@ -8,7 +8,7 @@ public class QueueSender {
 
     public static void main(String[] args) throws Exception{
 
-        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.56.2:61616");
 
         Connection connection = factory.createConnection();
         connection.start();
@@ -20,10 +20,10 @@ public class QueueSender {
 
         MessageProducer producer = session.createProducer(destination);
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 30; i++) {
             TextMessage message = session.createTextMessage("Hello ActiveMQ "+i+".");
             message.setStringProperty("username","xlp");
-            Thread.sleep(1000);
+//            Thread.sleep(1000);
             producer.send(message);
         }
         session.commit();

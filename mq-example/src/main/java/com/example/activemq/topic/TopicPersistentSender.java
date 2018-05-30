@@ -11,7 +11,7 @@ public class TopicPersistentSender {
 
     public static void main(String[] args) throws JMSException{
 
-        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.56.2:61616");
 
         Connection connection = factory.createConnection();
 

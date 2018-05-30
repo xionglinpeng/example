@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="connectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory" destroy-method="stop">
+        <property name="connectionFactory">
+            <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+                <property name="brokerURL" value="tcp://localhost:61616"/>
+            </bean>
+        </property>
+        <property name="maxConnections" value="100"/>
+    </bean>
+
+    <bean id="activeMQQueue" class="org.apache.activemq.command.ActiveMQQueue">
+        <property name="physicalName" value="spring-queue"/>
+    </bean>
+
+    <bean id="activeMQTopic" class="org.apache.activemq.command.ActiveMQTopic">
+        <property name="physicalName" value="spring-topic"/>
+    </bean>
+
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="defaultDestination" ref="activeMQTopic"/>
+        <!--消息转换-->
+        <property name="messageConverter">
+            <bean class="org.springframework.jms.support.converter.SimpleMessageConverter"/>
+        </property>
+    </bean>
+
+
+    <bean class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <property name="connectionFactory" ref="connectionFactory"/>
+        <property name="destination" ref="activeMQTopic"/>
+        <property name="messageListener">
+            <bean class="com.example.activemq.spring.TopicMessageListener"/>
+        </property>
+    </bean>
+
+</beans>
