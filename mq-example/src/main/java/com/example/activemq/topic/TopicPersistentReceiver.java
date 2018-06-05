@@ -1,6 +1,7 @@
 package com.example.activemq.topic;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.omg.CORBA.PUBLIC_MEMBER;
 
 import javax.jms.*;
 import java.util.Enumeration;
@@ -9,6 +10,7 @@ import java.util.Enumeration;
  * Created by haolw on 2018/5/24.
  */
 public class TopicPersistentReceiver {
+
 
     public static void main(String[] args) throws JMSException {
         ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.56.2:61616");
@@ -22,7 +24,7 @@ public class TopicPersistentReceiver {
         Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
         //目的地（主题）
-        Topic topic = session.createTopic("TEXT-TOPIC-PERSISTENT-1");
+        Topic topic = session.createTopic("VirtualTopic.Orders");
 
         //持久化订阅者（相当于队列中的consumer）
         TopicSubscriber subscriber = session.createDurableSubscriber(topic,"SUB_1");

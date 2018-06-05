@@ -7,14 +7,14 @@ import javax.jms.*;
 public class TopicNoNPersistentReceiver {
 
     public static void main(String[] args) throws JMSException{
-        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.56.2:61616");
 
         Connection connection = factory.createConnection();
         connection.start();
 
         Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
-        Destination destination = session.createTopic("TEXT-TOPIC-NON-PERSISTENT-1");
+        Destination destination = session.createTopic("VirtualTopic.Mirror.QUEUE-TEST");
 
         MessageConsumer consumer = session.createConsumer(destination);
 
