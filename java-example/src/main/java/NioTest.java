@@ -30,14 +30,14 @@ public class NioTest {
     }
 
     public static void test1() throws IOException{
-        FileInputStream fis = new FileInputStream("C:\\Users\\lenovo\\Desktop\\Java NIO (中文版).pdf");
+        FileInputStream fis = new FileInputStream("C:\\Users\\lenovo\\Desktop\\数据结构和Java集合框架.pdf");
         FileChannel channel = fis.getChannel();
 
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1024);
         channel.read(byteBuffer);
         byteBuffer.flip();
-        for(int i = 0; i < byteBuffer.capacity(); i++){
-            System.out.print(byteBuffer.get());
+        for(int i = 0; i < byteBuffer.limit(); i++){
+            System.out.print((char)byteBuffer.get());
         }
 
 

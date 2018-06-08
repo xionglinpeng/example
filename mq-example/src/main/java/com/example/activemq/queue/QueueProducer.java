@@ -37,6 +37,8 @@ public class QueueProducer {
         Connection connection = factory.createConnection();
         connection.start();
 
+        //第一个参数是否开启事务 true开启 ,false不开启事务，如果开启记得手动提交
+        //参数二，表示的是签收模式，一般使用的有自动签收和客户端自己确认签收
         Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
 
