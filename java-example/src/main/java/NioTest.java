@@ -1,4 +1,6 @@
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -7,8 +9,7 @@ import java.nio.channels.FileChannel;
  */
 public class NioTest {
 
-    public static void main(String[] args) throws Exception{
-
+    public static void test() throws IOException{
         byte[] message = "hello nio .".getBytes();
 
         FileOutputStream fos = new FileOutputStream("C:\\Users\\lenovo\\Desktop\\nio.txt");
@@ -26,6 +27,26 @@ public class NioTest {
         byteBuffer.flip();
 
         fileChannel.write(byteBuffer);
+    }
+
+    public static void test1() throws IOException{
+        FileInputStream fis = new FileInputStream("C:\\Users\\lenovo\\Desktop\\Java NIO (中文版).pdf");
+        FileChannel channel = fis.getChannel();
+
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(1024);
+        channel.read(byteBuffer);
+        byteBuffer.flip();
+        for(int i = 0; i < byteBuffer.capacity(); i++){
+            System.out.print(byteBuffer.get());
+        }
+
+
+
+    }
+
+    public static void main(String[] args) throws Exception{
+        NioTest.test1();
+
 
     }
 }

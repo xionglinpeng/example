@@ -19,9 +19,7 @@ public class ServletConfiguration implements ServletContextInitializer{
 
     @Override
     public void onStartup(ServletContext servletContext) throws ServletException {
-
         servletContext.setInitParameter("org.apache.activemq.brokerURL",activeMQProperties.getBrokerUrl());
-
     }
 
     @Bean

@@ -27,11 +27,29 @@
         <div class="panel panel-default">
             <div class="panel-heading">ActiveMQ AJAX</div>
             <div class="panel-body">
-                <textarea class="form-control" id="message"></textarea>
-                <button class="btn btn-primary btn-block" onclick="sendMessage()">发送</button>
                 <div class="row">
                     <div class="col-xs-12">
-                        <button class="btn btn-success btn-block" id="appPack">应用打包</button>
+                        <div class="">
+                            <label>
+                                <input type="radio" name="sendMode" checked onchange="sendType('JS')">JS发送
+                            </label>
+                            <label>
+                                <input type="radio" name="sendMode" onchange="sendType('IN')">接口发送
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <textarea class="form-control" id="message"></textarea>
+                <button class="btn btn-primary btn-block" onclick="sendMessage()">发送</button>
+                <button class="btn btn-info btn-block" onclick="startBatch()">startBatch</button>
+                <button class="btn btn-info btn-block" onclick="endBatch()">endBatch</button>
+                <button class="btn btn-success btn-block" onclick="getMessageQueue()">getMessageQueue</button>
+                <button class="btn btn-danger btn-block" onclick="removeListener()">removeListener</button>
+                <button class="btn btn-warning btn-block" onclick="testPollHandler()">testPollHandler</button>
+
+                <div class="row">
+                    <div class="col-xs-12">
                     </div>
                 </div>
             </div>
@@ -50,61 +68,73 @@
             logging: true,
             timeout: 20,
             clientId:clientId,
-            pollDelay:2
+            pollDelay:2,
+            sessionInitializedCallback:function () {
+                console.log('session init.')
+            },
+            /**
+             * 链接状态处理
+             * @param connected true:连接成功，false:连接失败。
+             */
+            connectStatusHandler:function (connected) {
+                console.log(connected)
+            }
         });
 
-        let id = 'myid1';
         let destination = 'topic://AJAX-TEST';
         let messageListener = function (data) {
-            console.log(data)
-            let text = data.data,disabled = true;
-            if(text === 'await'){
-                text = '等待中';
-            }else if(text === 'packaging'){
-                text = '打包中0%';
-            }else if(text === 'packaging20'){
-                text = '打包中20%';
-            }else if(text === 'packaging40'){
-                text = '打包中40%';
-            }else if(text === 'packaging60'){
-                text = '打包中60%';
-            }else if(text === 'packaging80'){
-                text = '打包中80%';
-            }else if(text === 'packaging100'){
-                text = '打包中100%';
-            }else if(text === 'success'){
-                text = '打包完成';
-                disabled = false;
-            }
-            $("#appPack").text(text).attr('disabled',disabled);
+            console.log(typeof data,data,data.data)
         };
 
 
+        let type = 'JS';
+        let sendType = function (t) {
+            type = t;
+        };
 
 
         amq.addListener(clientId,destination,messageListener);
 
         let sendMessage = function () {
-            // let message = $("#message").val();
+            let message = $("#message").val();
+            if(type === 'JS'){
+                console.info('send by js.');
+                amq.sendMessage(destination,message);
+            }else if (type === 'IN'){
+                console.info('send by in.');
+                $.get('/activemq/text?textMessage='+message,function (result) {
+                    console.log(result.status)
+                })
+            }
+        };
+        //startBatch:ƒ ()
+        let startBatch = function () {
+            let val = amq.startBatch();
+            console.log(val);
+        };
 
-            let messages = ['await','packaging','packaging20','packaging40','packaging60','packaging80','packaging100','success'];
+        //endBatch:ƒ ()
+        let endBatch = function () {
+            console.log(amq.endBatch());
+        };
 
-            let i = 0,len = messages.length;
-            let index = setInterval(function () {
-                amq.sendMessage(destination,messages[i++]);
-                if(i === len){
-                    clearInterval(index);
-                }
-            },3000);
+        //getMessageQueue:ƒ ()
+        let getMessageQueue = function () {
+            let val = amq.getMessageQueue();
+            console.log(val);
+        };
 
+        //removeListener:ƒ (id, destination)
+        let removeListener= function () {
+            let val = amq.removeListener(clientId,destination);
+            console.log(val);
+        };
 
-            // $.get('/activemq/text?textMessage='+message,function (result) {
-            //     if(result.status === 'success'){
-            //         alert('success');
-            //     }
-            // })
-        }
-
+        //testPollHandler:ƒ ( data )
+        let testPollHandler = function () {
+            let val = amq.testPollHandler("fasd");
+            console.log(val);
+        };
     </script>
 </body>
 </html>
