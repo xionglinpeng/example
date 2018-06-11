@@ -2,6 +2,7 @@ package com.example.activemq;
 
 import com.example.activemq.queue.QueueConsumer;
 import com.example.activemq.topic.TopicPersistentSender;
+import org.apache.activemq.*;
 
 /**
  * 测试虚拟主题
@@ -19,6 +20,7 @@ public class VirtualDestination {
 
 
     public static void main(String[] args) {
+
         QueueConsumer queueConsumer = new QueueConsumer();
         queueConsumer.consumer(BROKER_URL,VIRTUAL_QUEUE_NAME_A,"QUEUE-A");
 

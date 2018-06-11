@@ -34,7 +34,7 @@ public class TopicSender {
             producer.setDeliveryMode(DeliveryMode);
 
             for(int i = 0; i < 3; i++){
-                TextMessage message = session.createTextMessage(UUID.randomUUID().toString());
+                TextMessage message = session.createTextMessage(i+"");
                 producer.send(message);
             }
             session.commit();

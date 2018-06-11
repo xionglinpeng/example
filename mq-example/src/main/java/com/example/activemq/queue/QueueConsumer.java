@@ -1,6 +1,10 @@
 package com.example.activemq.queue;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.advisory.AdvisorySupport;
+import org.apache.activemq.command.ActiveMQMessage;
+import org.apache.activemq.command.DataStructure;
+import org.apache.activemq.command.ProducerInfo;
 
 import javax.jms.*;
 import java.util.Enumeration;
@@ -33,7 +37,6 @@ public class QueueConsumer {
             Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
 
             Destination destination = session.createQueue(queueName);
-
 
             ThreadPoolExecutor executor = new ThreadPoolExecutor(
                     consumerNum,consumerNum,100000,

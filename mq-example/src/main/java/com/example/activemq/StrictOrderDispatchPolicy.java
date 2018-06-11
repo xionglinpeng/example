@@ -13,14 +13,19 @@ public class StrictOrderDispatchPolicy {
     private static final String TOPIC_NAME = "STRIC-ORDER-DISPATCH-POLICY";
 
     public static void main(String[] args) {
-//        TopicSubscribe topicSubscribe = new TopicSubscribe();
-//        topicSubscribe.subscribe(BROKER_URL,TOPIC_NAME);
+
+        for(int i = 0; i < 2 ; i++){
+            TopicSubscribe topicSubscribe = new TopicSubscribe();
+            topicSubscribe.setTag("thread-"+i);
+            Thread thread = new Thread(()->{topicSubscribe.subscribe(BROKER_URL,TOPIC_NAME);});
+            thread.start();
+        }
+
 
         TopicSender topicSender = new TopicSender();
-        topicSender.topicNonPersistentSender(BROKER_URL,TOPIC_NAME);
-//        topicSender.topicNonPersistentSender(BROKER_URL,TOPIC_NAME);
-        TopicSender topicSender1 = new TopicSender();
-        topicSender1.topicNonPersistentSender(BROKER_URL,TOPIC_NAME);
-
+        Thread thread1 = new Thread(()->topicSender.topicNonPersistentSender(BROKER_URL,TOPIC_NAME));
+        Thread thread2 = new Thread(()->topicSender.topicNonPersistentSender(BROKER_URL,TOPIC_NAME));
+        thread1.start();
+        thread2.start();
     }
 }
