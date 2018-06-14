@@ -32,7 +32,7 @@ public class QueueProducer {
     public static void main(String[] args) throws Exception{
 
         ConnectionFactory factory = new ActiveMQConnectionFactory(
-                "failover:(tcp://192.168.56.4:61616)?randomize=true");
+                "failover:(tcp://localhost:61616)?randomize=true");
 
         Connection connection = factory.createConnection();
         connection.start();
@@ -45,7 +45,7 @@ public class QueueProducer {
         Destination destination = session.createQueue("My-Queue,CONSUMER-CLUSTER-TEST");
 
         MessageProducer producer = session.createProducer(destination);
-
+        System.out.println(111);
         for (int i = 0; i < 30; i++) {
             TextMessage message = session.createTextMessage("Hello ActiveMQ "+i+".");
             message.setStringProperty("username","xlp");
