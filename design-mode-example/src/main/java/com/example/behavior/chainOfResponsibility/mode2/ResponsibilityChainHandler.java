@@ -1,4 +1,4 @@
-package com.example.chainOfResponsibility.mode2;
+package com.example.behavior.chainOfResponsibility.mode2;
 
 public abstract class ResponsibilityChainHandler {
 

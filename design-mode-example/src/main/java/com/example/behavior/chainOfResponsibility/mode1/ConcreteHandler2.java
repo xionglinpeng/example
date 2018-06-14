@@ -1,4 +1,4 @@
-package com.example.chainOfResponsibility.mode1;
+package com.example.behavior.chainOfResponsibility.mode1;
 
 public class ConcreteHandler2 extends Handler {
 

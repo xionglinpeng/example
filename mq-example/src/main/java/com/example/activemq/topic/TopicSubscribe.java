@@ -1,9 +1,8 @@
-package com.example.activemq;
+package com.example.activemq.topic;
 
 import lombok.Data;
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.jms.*;
@@ -15,8 +14,7 @@ public class TopicSubscribe {
 
     public void subscribe(String brokerURL,String topicName){
         try {
-            ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(
-                    "tcp://192.168.56.2:61616?jms.useAsyncSend=true");
+            ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerURL);
             factory.setOptimizeAcknowledge(Boolean.TRUE);
 
             Connection connection = factory.createConnection();

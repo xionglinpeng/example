@@ -1,14 +1,13 @@
-package com.example.activemq;
+package com.example.activemq.topic;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
-import java.util.UUID;
 
 /**
  * Created by haolw on 2018/5/24.
  */
-public class TopicSender {
+public class TopicProducer {
 
 
     public void topicPersistentSender(String brokerURL,String topicName){
