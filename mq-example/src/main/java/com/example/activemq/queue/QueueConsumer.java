@@ -68,7 +68,7 @@ public class QueueConsumer {
 
 
     public static void main(String[] args) throws Exception {
-        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://192.168.56.2:61616");
+        ConnectionFactory factory = new ActiveMQConnectionFactory("tcp://localhost:61616");
         Connection connection = factory.createConnection();
 
         Enumeration enumeration = connection.getMetaData().getJMSXPropertyNames();
