@@ -1,6 +1,7 @@
 package com.example.activemq;
 
-import com.example.activemq.queue.QueueProducer;
+import com.example.activemq.topic.TopicProducer;
+import com.example.activemq.topic.TopicSubscribe;
 
 /**
  * 严格顺序分发策略
@@ -22,7 +23,7 @@ public class StrictOrderDispatchPolicy {
         }
 
 
-        TopicSender topicSender = new TopicSender();
+        TopicProducer topicSender = new TopicProducer();
         Thread thread1 = new Thread(()->topicSender.topicNonPersistentSender(BROKER_URL,TOPIC_NAME));
         Thread thread2 = new Thread(()->topicSender.topicNonPersistentSender(BROKER_URL,TOPIC_NAME));
         thread1.start();

@@ -1,7 +1,6 @@
 package com.example.activemq;
 
-import com.example.activemq.queue.QueueConsumer;
-import com.example.activemq.queue.QueueProducer;
+import com.example.activemq.topic.TopicSubscribe;
 
 /**
  * 测试镜像队列
