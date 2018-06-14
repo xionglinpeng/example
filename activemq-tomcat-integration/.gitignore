@@ -16,7 +16,7 @@ logs
 .idea
 *.iws
 *.iml
-*.ipr
+*.iprgit
 
 ### NetBeans ###
 /nbproject/private/
