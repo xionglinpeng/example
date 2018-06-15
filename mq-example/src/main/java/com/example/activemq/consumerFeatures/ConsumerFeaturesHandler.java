@@ -5,6 +5,8 @@ package com.example.activemq.consumerFeatures;
  */
 public abstract class ConsumerFeaturesHandler {
 
+    protected final String DEFAULT_BROKER_URL_TCP = "tcp://127.0.0.1:61616";
+
     protected final String DEFAULT_TOPIC_NAME = "consumer-features";
 
     private ConsumerFeaturesHandler nextHandler;
