@@ -11,10 +11,12 @@ public class ConsumerFeaturesClient {
         ConsumerFeaturesHandler consumerPriority = new ConsumerPriority();
         ConsumerFeaturesHandler consumerDispatchAsync = new ConsumerDispatchAsync();
         ConsumerFeaturesHandler manageDurableSubscribers = new ManageDurableSubscribers();
+        ConsumerFeaturesHandler messageGroups = new MessageGroups();
         exclusiveCosnumer
         .setNextHandler(consumerPriority)
         .setNextHandler(consumerDispatchAsync)
         .setNextHandler(manageDurableSubscribers)
+        .setNextHandler(messageGroups);
         ;
         exclusiveCosnumer.handler(tag);
     }
