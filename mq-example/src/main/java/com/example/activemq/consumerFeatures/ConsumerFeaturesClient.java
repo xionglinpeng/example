@@ -6,22 +6,23 @@ package com.example.activemq.consumerFeatures;
 public class ConsumerFeaturesClient {
 
     public static void main(String[] args) throws Exception{
-//        int tag = Integer.valueOf(args[0]);
-//        ConsumerFeaturesHandler exclusiveCosnumer = new ExclusiveCosnumer();
-//        ConsumerFeaturesHandler consumerPriority = new ConsumerPriority();
-//        ConsumerFeaturesHandler consumerDispatchAsync = new ConsumerDispatchAsync();
-//        ConsumerFeaturesHandler manageDurableSubscribers = new ManageDurableSubscribers();
-//        ConsumerFeaturesHandler messageGroups = new MessageGroups();
-//        exclusiveCosnumer
-//        .setNextHandler(consumerPriority)
-//        .setNextHandler(consumerDispatchAsync)
-//        .setNextHandler(manageDurableSubscribers)
-//        .setNextHandler(messageGroups)
-//        ;
-//        exclusiveCosnumer.handler(tag);
+        int tag = Integer.valueOf(args[0]);
+        ConsumerFeaturesHandler exclusiveCosnumer = new ExclusiveCosnumer();
+        ConsumerFeaturesHandler consumerPriority = new ConsumerPriority();
+        ConsumerFeaturesHandler consumerDispatchAsync = new ConsumerDispatchAsync();
+        ConsumerFeaturesHandler manageDurableSubscribers = new ManageDurableSubscribers();
+        ConsumerFeaturesHandler messageGroups = new MessageGroups();
+        ConsumerFeaturesHandler selectors = new Selectors();
+        ConsumerFeaturesHandler redeliveryPolicy = new RedeliveryPolicy();
 
-//        Foo foo = new Foo();
-        System.out.println( Foo.AA());
-        System.out.println( Foo.AA().equals(Foo.AA()));
+        exclusiveCosnumer
+        .setNextHandler(consumerPriority)
+        .setNextHandler(consumerDispatchAsync)
+        .setNextHandler(manageDurableSubscribers)
+        .setNextHandler(messageGroups)
+        .setNextHandler(selectors)
+        .setNextHandler(redeliveryPolicy)
+        ;
+        exclusiveCosnumer.handler(tag);
     }
 }

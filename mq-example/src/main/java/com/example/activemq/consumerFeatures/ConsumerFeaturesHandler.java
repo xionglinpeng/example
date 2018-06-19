@@ -5,13 +5,13 @@ package com.example.activemq.consumerFeatures;
  */
 public abstract class ConsumerFeaturesHandler {
 
-    protected final String DEFAULT_BROKER_URL_TCP = "tcp://127.0.0.1:61616";
+    protected final String DEFAULT_BROKER_URL_TCP = "tcp://192.168.56.2:61616";
 
     protected final String DEFAULT_TOPIC_NAME = "consumer-features";
 
     private ConsumerFeaturesHandler nextHandler;
 
-    public void handler(int tag) {
+    public void handler(int tag) throws Exception {
         if(this.condition(tag)){
             this.execute();
         } else {
@@ -38,5 +38,5 @@ public abstract class ConsumerFeaturesHandler {
 
     protected abstract boolean condition(int tag);
 
-    protected abstract void execute();
+    protected abstract void execute() throws Exception;
 }
