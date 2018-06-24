@@ -10,6 +10,10 @@ import org.apache.zookeeper.data.Stat;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -97,23 +101,11 @@ public class Locks implements Watcher {
 //            System.out.println("b="+b);
 //        },null);
 //        System.out.println("aaa"+assignUsers2);
-//        List<Integer> nums = Lists.newArrayList(1,1,null,2,3,4,null,5,6,7,8,9,10);
-//        List<Integer> numsWithoutNull = nums.stream().filter(num -> num != null)
-//                .collect(ArrayList::new,
-//                        (list, item) -> list.add(item),
-//                        (list1, list2) -> list1.addAll(list2));
+//
+//        Files.readAllLines(Paths.get(""));
 
+//        StandardCharsets.UTF_8
 
-        List<Integer> nums = new ArrayList<Integer>();
-        nums.add(1);nums.add(1);nums.add(null);
-                nums.add(2);nums.add(3);nums.add(4);nums.add(null);nums.add(5);nums.add(6);nums.add(7);nums.add(8);nums.add(9);nums.add(10);
-        List<Integer> numsWithoutNull = nums.stream().filter(num -> num != null)
-                .collect(ArrayList::new,
-                        List::add,
-                        List::addAll);
-
-        System.out.println(nums);
-        Collectors.toList()
-
+        System.out.println(Paths.get("Locks").toFile());
     }
 }

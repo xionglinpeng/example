@@ -5,6 +5,8 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 @Data
@@ -25,11 +27,47 @@ public class Master implements Watcher {
             case OK:
                 isLeader = true;
                 break;
+            case NODEEXISTS:
+                masterExists();
             default:
                 isLeader = false;
                 System.out.println(rc);
         }
         System.out.println("I'm "+(isLeader?"":"not ")+"the leader");
+    };
+
+    void masterExists() {
+        zk.exists("/master",masterExistsWatcher,masterExistsCallback,null);
+    }
+
+    AsyncCallback.StatCallback masterExistsCallback = new AsyncCallback.StatCallback() {
+        @Override
+        public void processResult(int i, String s, Object o, Stat stat) {
+            switch (KeeperException.Code.get(i)) {
+                case CONNECTIONLOSS:
+                    masterExists();
+                    break;
+                case OK:
+                    //也许在监视的时候，主节点被删除了（是否删除由）stat == null判断，重新竞选主节点。
+                    if (stat == null) {
+                        runForMaster();
+                    }
+                    break;
+                default:
+                    checkMaster();
+                    break;
+            }
+        }
+    };
+
+    /**
+     * 监视主节点，如果主节点被删除了，会触发NodeDeleted事件，当前线程取竞选主节点。
+     */
+    Watcher masterExistsWatcher = e -> {
+        if(e.getType() == Event.EventType.NodeDeleted){
+            assert "/master".equals(e.getPath());
+            runForMaster();
+        }
     };
 
     public Master(String hostPort) {
@@ -120,6 +158,80 @@ public class Master implements Watcher {
 //        }
 //    }
 
+    List<String> workerList = new ArrayList<>();
+
+
+
+    void getTasks() {
+        zk.getChildren("/tasks",watchedEvent->{
+            if (watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
+                assert "/tasks".equals(watchedEvent.getPath());
+                getTasks();
+            }
+        },(rc,path,ctx,children)->{
+            switch (KeeperException.Code.get(rc)) {
+                case CONNECTIONLOSS:
+                    getTasks();
+                    break;
+                case OK:
+                    if (children != null) {
+                        assignTasks(children);
+                    }
+                    break;
+                default:
+                    System.out.println("getChiledren failed."+KeeperException.create(KeeperException.Code.get(rc))+path);
+            }
+        },null);
+    }
+
+    void deleteTask(String name) {
+
+    }
+
+    void assignTasks(List<String> tasks) {
+        tasks.forEach(this::getTaskData);
+    }
+
+
+
+    void getTaskData(String task) {
+        zk.getData("/tasks/"+task,false,(rc,path,ctx,data,stat)->{
+            switch (KeeperException.Code.get(rc)) {
+                case CONNECTIONLOSS:
+                    getTaskData(ctx.toString());
+                    break;
+                case OK:
+
+                    int worker = random.nextInt(workerList.size());
+                    String designatedWorker = "";
+
+                    String assignmentPath = "assign"+designatedWorker+"/"+ctx.toString();
+                    createAssignment(assignmentPath,data);
+                    break;
+                default:
+                    System.out.println("getChiledren failed." + KeeperException.create(KeeperException.Code.get(rc)) + path);
+            }
+        },task);
+    }
+
+    void createAssignment(String path,byte[] data) {
+        zk.create(path,data, ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,(rc,p,ctx,name)->{
+            switch (KeeperException.Code.get(rc)) {
+                case CONNECTIONLOSS:
+                    createAssignment(p,(byte[]) ctx);
+                    break;
+                case OK:
+                    System.out.println("Task assigned correctly: "+name);
+                    deleteTask(name.substring(name.lastIndexOf("/")+1));
+                    break;
+                case NODEEXISTS:
+                    System.out.println("Task already assigned");
+                    break;
+                default:
+                    System.out.println("Error when trying to assign task."+KeeperException.create(KeeperException.Code.get(rc))+p);
+            }
+        },data);
+    }
 
 
 
