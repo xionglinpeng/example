@@ -105,6 +105,9 @@ public class ChildrenAndCombinationStream {
         optional = Optional.ofNullable("world");
         String value;
 
+        //验证是否符合过滤条件，符合，则返回原Optional对象，如果不符合，则返回一个新的空Optional对象。
+        optional = optional.filter(s->s.equals("hello"));
+
         //传递的函数参数不能为null，否则抛出NullPointerException
         //如果optional没有值，则返回一个空的新的optional对象。
         //消费T返回R，R继承Optional，即R类型必须为Optional类型
@@ -170,5 +173,50 @@ public class ChildrenAndCombinationStream {
             System.out.println(y);
             return x+y;});
         System.out.println(l);
+    }
+
+    @Test
+    public void collectCollection() {
+        Stream<String> stream = Stream.of("Speak","up","if","you","want","somebody");
+
+        Set<String> set1 = stream.collect(Collectors.toSet());
+        Set<String> set2 = stream.collect(TreeSet::new,TreeSet::add,TreeSet::addAll);
+        stream.collect(Collectors.toList());
+        stream.collect(Collectors.toSet());
+        stream.collect(Collectors.toCollection(LinkedList::new));
+        String str = stream.collect(Collectors.joining());
+        String str1 = stream.collect(Collectors.joining(" "));
+        String str2 = stream.collect(Collectors.joining(" ","(",")"));
+
+        IntSummaryStatistics s = stream.collect(Collectors.summarizingInt(String::length));
+
+    }
+
+    @Test
+    public void collectMap() {
+        Stream<User> user = StreamCreate.users();
+//        Map<String,Integer> map = user.collect(Collectors.toMap(User::getName,User::getAge));
+        Map<String,User> map = user.collect(Collectors.toMap(User::getName,Function.identity()));
+        Map<String,User> map1 = user.collect(Collectors.toMap(User::getName,Function.identity(),(a,b)->a,TreeMap::new));
+        System.out.println(map);
+
+        Stream<Locale> locale = Stream.of(Locale.getAvailableLocales());
+//        Map<String,String> languageName = locale.collect(
+//                Collectors.toMap(
+//                        Locale::getDisplayLanguage,
+//                        s->s.getDisplayLanguage(s),
+//                        (o,n)->o));
+//        languageName.forEach((k,v)-> System.out.println(k+"="+v));
+
+        Map<String,Set<String>> countrylanguageSets = locale.collect(
+                Collectors.toMap(
+                        Locale::getDisplayLanguage,
+                        s->Collections.singleton(s.getDisplayLanguage()),
+                        (a,b)->{
+                            Set<String> r = new HashSet<>(a);
+                            r.addAll(b);
+                            return r;
+                        }));
+        countrylanguageSets.forEach((k,v)-> System.out.println(k+"="+v));
     }
 }
