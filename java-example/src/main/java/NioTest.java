@@ -45,8 +45,10 @@ public class NioTest {
     }
 
     public static void main(String[] args) throws Exception{
-        NioTest.test1();
-
-
+//        NioTest.test1();
+        int d = 5200/1000;
+        int c = 5200%1000;
+        System.out.println(5200/1000);
+        System.out.println(c);
     }
 }

@@ -77,22 +77,33 @@ public class ChildrenAndCombinationStream {
 
     @Test
     public void findAny(){
-
+        StreamCreate.program().findAny();
     }
 
     @Test
     public void anyMatch(){
-
+        Stream<String> stream = StreamCreate.program();
+        //stream中的所有元素只要有一个满足条件，则返回true。否则，返回true，
+        boolean b = stream.anyMatch(s->s.equals("SpringCloud"));
+        System.out.println(b);
     }
 
     @Test
     public void allMatch(){
+        //用于判断流中的所有元素是否都满足指定条件,这个判断条件通过Lambda表达式传递给anyMatch,执行结果为boolean
+        Stream<String> stream = StreamCreate.program();
+        boolean b = stream.allMatch(s->s.length()>2);
+        System.out.println(b);
 
     }
 
     @Test
     public void noneMatch(){
-
+        Stream<String> stream = StreamCreate.program();
+        //用于判断流中的所有元素是否都不满足指定条件,这个判断条件通过Lambda表达式传递给anyMatch,执行结果为boolean
+        //stream中的所有元素都不满足条件，返回true，只要有一个满足，则返回false。
+        boolean b = stream.noneMatch(s->s.equals("123"));
+        System.out.println(b);
     }
 
     @Test
@@ -105,6 +116,8 @@ public class ChildrenAndCombinationStream {
         optional = Optional.ofNullable("world");
         String value;
 
+        //传递的函数参数不能为null，否则抛出NullPointerException
+        //如果Optional没有值，则返回当前Optional对象
         //验证是否符合过滤条件，符合，则返回原Optional对象，如果不符合，则返回一个新的空Optional对象。
         optional = optional.filter(s->s.equals("hello"));
 
@@ -178,18 +191,40 @@ public class ChildrenAndCombinationStream {
     @Test
     public void collectCollection() {
         Stream<String> stream = Stream.of("Speak","up","if","you","want","somebody");
+//        //第一个参数指定收集的类型，例如TreeSet::new
+//        //第二个参数指定收集的添加方法
+//        //第三个参数指定并行收集的合并方法，只有在并行收集的情况下才会调用？
+//        stream.collect(TreeSet::new,TreeSet::add,TreeSet::addAll);
+//        //默认是ArrayList类型
+//        stream.collect(Collectors.toList());
+//        //默认是HashSet类型
+//        stream.collect(Collectors.toSet());
+//        //自己制定类型，例如：LinkedList
+//        stream.collect(Collectors.toCollection(LinkedList::new));
+//        //收集字符串拼接
+//        stream.collect(Collectors.joining());
+//        stream.collect(Collectors.joining(" "));
+//        stream.collect(Collectors.joining(" ","(",")"));
 
-        Set<String> set1 = stream.collect(Collectors.toSet());
-        Set<String> set2 = stream.collect(TreeSet::new,TreeSet::add,TreeSet::addAll);
-        stream.collect(Collectors.toList());
-        stream.collect(Collectors.toSet());
-        stream.collect(Collectors.toCollection(LinkedList::new));
-        String str = stream.collect(Collectors.joining());
-        String str1 = stream.collect(Collectors.joining(" "));
-        String str2 = stream.collect(Collectors.joining(" ","(",")"));
 
-        IntSummaryStatistics s = stream.collect(Collectors.summarizingInt(String::length));
-
+//        DoubleSummaryStatistics s1 = stream.collect(Collectors.summarizingDouble(s->Double.parseDouble("123")));
+//        LongSummaryStatistics s2 = stream.collect(Collectors.summarizingLong(s->Long.getLong("123")));
+        IntSummaryStatistics s0 = stream.collect(Collectors.summarizingInt(String::length));
+        System.out.println(s0.toString());
+        //平均值；返回类型：double。
+        System.out.println(s0.getAverage());
+        //总数；返回类型：long。
+        System.out.println(s0.getCount());
+        //最大值；返回类型：int。
+        System.out.println(s0.getMax());
+        //最小值；返回类型：int。
+        System.out.println(s0.getMin());
+        //总和；返回类型：long。
+        System.out.println(s0.getSum());
+        //将一个新值记录到摘要信息中
+        s0.accept(1);
+        //将另一个IntSummaryStatistics的状态组合到这个状态中。
+        s0.combine(s0);
     }
 
     @Test
@@ -218,5 +253,25 @@ public class ChildrenAndCombinationStream {
                             return r;
                         }));
         countrylanguageSets.forEach((k,v)-> System.out.println(k+"="+v));
+    }
+
+    @Test
+    public void parallel() throws Exception {
+        Set<String> threads = new HashSet<>();
+        long startTime = System.currentTimeMillis();
+        Stream.generate(Math::random).limit(1000).parallel().forEach(u->{
+            try {
+                Thread.sleep(100);
+            }catch (Exception e) {}
+
+            threads.add(Thread.currentThread().getName());
+        });
+        //25773 25785
+        //100471
+        System.out.println(System.currentTimeMillis()-startTime);
+//        Thread.sleep(3000);
+        System.out.println(threads.size());
+        threads.forEach(System.out::println);
+        System.out.println(threads.stream().distinct().collect(Collectors.toSet()));
     }
 }
