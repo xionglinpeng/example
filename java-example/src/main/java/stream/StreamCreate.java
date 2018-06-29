@@ -15,6 +15,7 @@ public class StreamCreate {
         users.add(new User("Sophia",26));
         users.add(new User("Thomas",29));
         users.add(new User("Jessica",24));
+        users.add(new User("Jessica",20));
         return users.stream();
     }
 

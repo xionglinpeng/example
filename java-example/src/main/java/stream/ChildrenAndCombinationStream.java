@@ -256,6 +256,32 @@ public class ChildrenAndCombinationStream {
     }
 
     @Test
+    public void collectGroup() {
+        //groupingBy将其收集为了一个map对象
+        Map<String, List<User>> listMap = StreamCreate.users().collect(Collectors.groupingBy(User::getName));
+        listMap.forEach((k,v)->{
+            System.out.println(k+"="+v);
+        });
+
+        //第二个参数指定了收集map的类型，默认是hashMap
+        //第三参数数指定了收集map-value的结果集类型，默认是ArrayList
+        Map<String, Set<User>> listMap1 = StreamCreate.users().collect(Collectors.groupingBy(User::getName,Collectors.toSet()));
+        System.out.println("\nlistMap1="+listMap1.getClass());
+        listMap.forEach((k,v)->{
+            System.out.println(k+"="+v.getClass());
+        });
+
+        Map<String, Set<User>> listMap2 = StreamCreate.users().collect(Collectors.groupingBy(User::getName,LinkedHashMap::new,Collectors.toSet()));
+        System.out.println("\nlistMap2="+listMap2.getClass());
+        listMap.forEach((k,v)->{
+            System.out.println(k+"="+v.getClass());
+        });
+
+
+    }
+
+
+    @Test
     public void parallel() throws Exception {
         Set<String> threads = new HashSet<>();
         long startTime = System.currentTimeMillis();
