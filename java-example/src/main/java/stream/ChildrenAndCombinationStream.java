@@ -2,6 +2,7 @@ package stream;
 
 import org.junit.Test;
 
+import javax.xml.ws.soap.Addressing;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -273,9 +274,13 @@ public class ChildrenAndCombinationStream {
 
         Map<String, Set<User>> listMap2 = StreamCreate.users().collect(Collectors.groupingBy(User::getName,LinkedHashMap::new,Collectors.toSet()));
         System.out.println("\nlistMap2="+listMap2.getClass());
-        listMap.forEach((k,v)->{
-            System.out.println(k+"="+v.getClass());
-        });
+//        listMap.forEach((k,v)->{
+//            System.out.println(k+"="+v.getClass());
+//        });
+
+        for (Map.Entry<String,Set<User>> entry : listMap2.entrySet()) {
+            System.out.println(entry.getKey()+"="+entry.getValue().getClass());
+        }
 
 
     }
@@ -299,5 +304,22 @@ public class ChildrenAndCombinationStream {
         System.out.println(threads.size());
         threads.forEach(System.out::println);
         System.out.println(threads.stream().distinct().collect(Collectors.toSet()));
+    }
+
+    @Test
+    public void parallelGroup() {
+        List<Double> doubles = Stream.generate(Math::random).limit(139300).collect(Collectors.toList());
+
+        long statTime = System.currentTimeMillis();
+        int size  = doubles.size();
+        int d = size/1000;
+        int c = size%1000;
+        int group = d+(c!=0?1:0);
+        System.out.println(group);
+        List<List<Double>> inListSplit = new ArrayList<>(group);
+        for (int i = 0; i < group; i++) {
+            inListSplit.add(doubles.stream().skip(i*1000).limit(1000).collect(Collectors.toList()));
+        }
+        System.out.println("分组耗时："+(System.currentTimeMillis() - statTime));
     }
 }
