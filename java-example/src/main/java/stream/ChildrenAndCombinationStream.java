@@ -290,13 +290,31 @@ public class ChildrenAndCombinationStream {
     public void parallel() throws Exception {
         Set<String> threads = new HashSet<>();
         long startTime = System.currentTimeMillis();
-        Stream.generate(Math::random).limit(1000).parallel().forEach(u->{
-            try {
-                Thread.sleep(100);
-            }catch (Exception e) {}
+        Stream s =  Stream.generate(Math::random).limit(1000).parallel();
+        System.out.println("111111");
+        Thread thread = new Thread(()->{
+            System.out.println("ccassd");
+            s.forEach(u->{
+                try {
 
-            threads.add(Thread.currentThread().getName());
+//                System.out.println("2222");
+                    if (!Thread.currentThread().getName().equals("main")){
+                        Thread.sleep(100);
+                    } else {
+                        System.out.print("mian-");
+                    }
+                }catch (Exception e) {}
+
+                threads.add(Thread.currentThread().getName());
+            });
+            System.out.println("fffffff");
         });
+        thread.start();
+        thread.join();
+
+
+        System.out.println("11112222333444");
+//        Thread.sleep(200000);
         //25773 25785
         //100471
         System.out.println(System.currentTimeMillis()-startTime);
