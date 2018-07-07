@@ -323,6 +323,8 @@ public class TestStream {
 
         /*
             groupingBy和groupingByConcurrent
+            groupingByConcurrent的mapFactory入参声明的类型是ConcurrentHashMap
+            //即是一个线程安全的并发map
          */
         Map<String, Optional<User>> listMap10 = StreamCreate.users().parallel()
                 .collect(Collectors.groupingByConcurrent(u->{
