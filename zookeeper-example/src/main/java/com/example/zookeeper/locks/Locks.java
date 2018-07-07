@@ -1,6 +1,7 @@
 package com.example.zookeeper.locks;
 
 import com.example.zookeeper.ZookeeperApplication;
+import jdk.nashorn.internal.runtime.options.Option;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -14,19 +15,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Data
 public class Locks implements Watcher {
 
     private final Object $lock = new Object[0];
 
-    private String connectString = "127.0.0.1:2181";
-
-    private int sessionTimeout = 15000;
+    private static final int DEFAULT_ZK_SESSION_TIMEOUT = 15000;
 
     private ZooKeeper zk;
 
@@ -34,78 +32,128 @@ public class Locks implements Watcher {
 
     private static final String ROOT = "/locks";
 
-
-    public Locks() throws Exception{
-//        zk = new ZooKeeper(this.connectString,this.sessionTimeout,this);
-//        if (zk.exists(ROOT,false) == null) {
-//            zk.create(ROOT,new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
-//        }
+    public Locks(String connectString) throws IOException{
+        this(connectString,DEFAULT_ZK_SESSION_TIMEOUT);
     }
 
+    public Locks(String connectString, int sessionTimeout) throws IOException{
+        zk = new ZooKeeper(connectString,sessionTimeout,this);
+    }
+
+    @PostConstruct
+    public void initializeRootNode() throws KeeperException, InterruptedException {
+        if (zk.exists(ROOT,false) == null) {
+            zk.create(ROOT,new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
+        }
+    }
 
     @Override
     public void process(WatchedEvent watchedEvent) {
-        if(watchedEvent.getType() == Event.EventType.NodeDeleted){
-            this.notifyAllWait();
+        //所有竞争对象都会收到事件
+        if (watchedEvent.getType() == Event.EventType.NodeDeleted) {
+            //其中一个竞争对象删除了自身创建的临时顺序节点，即表示释放了锁，
+            //所以，唤醒所有等待的竞争对象，让其去竞争锁。
+            synchronized ($lock){
+                $lock.notify();
+            }
         }
     }
 
-    @Synchronized
-    public void notifyAllWait() {
-        $lock.notifyAll();
-    }
+    public void getLock() throws KeeperException, InterruptedException {
+        //获取所有子节点
+        List<String> childrenNode = zk.getChildren(ROOT,false);
+        //收集最小的子节点
+        Optional<String> option = childrenNode.stream().sorted().findFirst();
 
+        //lock_0000000016
+        String minNode = ROOT + "/" + option.get();
 
-    public void getLock() throws Exception{
-        List<String> list = this.getZk().getChildren(ROOT,false);
-//        String[] childrens = list.toArray(new String[list.size()]);
-        Arrays.sort(list.toArray());
-        String leastNode = list.get(0);
-        if(this.getMyZNode().equals(leastNode)){
+        Stat stat = zk.exists(minNode, true);
+
+        if (stat == null) {
+            //获取的最小节点不存在，表示其他获取到锁的竞争对象抢到了锁，在当前竞争对象获取所有子节点的时候，还没有释放锁
+            //而在进行最小子节点判断是否存在的时候，获取到锁的竞争对象已经删除最小子节点，并且很有可能在当前竞争对象获得
+            //同步锁等待的时候就先一步调用了notify，导致当前竞争对象wait之后没有其他竞争对象唤醒，产生死锁。
+
+            //所以，最小子节点不存在，就可以认为其他获取到锁的竞争对象已经释放了锁，不再等待，直接再次去竞争锁。
+            getLock();
+            return;
+        }
+
+        //如果最小的子节点与当前竞争对象的节点相同，即表示当前竞争对象获得锁
+        if (myZNode.equals(minNode)) {
             this.doAction();
+            //执行完成，释放锁(删除自己的节点)
+            zk.delete(minNode,stat.getVersion());
         } else {
-            this.waitForLock(leastNode);
+            //不相同，等待
+            synchronized ($lock) {
+                $lock.wait();
+            }
+            //等待被唤醒，表示其他竞争对象释放了锁，去竞争锁。
+            getLock();
         }
     }
-
-    public void waitForLock(@NonNull String leastNode) throws Exception {
-        Stat stat = this.getZk().exists(leastNode,true);
-        if (stat != null) {
-            $lock.wait();
-        }
-        this.getLock();
-    }
-
 
     public void doAction() {
-        System.out.println(".........................");
+        System.out.println(myZNode+" : For the lock.");
     }
 
 
-    public void start() throws Exception {
-        this.setMyZNode(this.getZk().create(ROOT+"/lock-",new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL_SEQUENTIAL));
-        this.getLock();
+    AsyncCallback.StringCallback stringCallback = (int code, String node, Object ctx, String name) ->{
+            System.out.println(code+"<->"+node+"<->"+ctx+"<->"+name);
+
+    };
+
+    public void check() throws KeeperException, InterruptedException {
+        //创建自己的临时顺序节点
+        zk.create(ROOT + "/lock_", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
+            @Override
+            public void processResult(int code, String path, Object ctx, String node) {
+//                code : 0
+//                path : /locks/lock_
+//                ctx : null
+//                node : /locks/lock_0000000493
+                System.out.println(code+"<->"+path+"<->"+ctx+"<->"+node);
+                try {
+                    switch (KeeperException.Code.get(code)) {
+                        case CONNECTIONLOSS:
+                            check();
+                            break;
+                        case OK:
+                            myZNode = node;
+                            //去争取锁
+                            getLock();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        },null);
     }
 
-
-
+    public static void run(){
+        try {
+            Locks locks = new Locks("127.0.0.1:2181");
+            locks.check();
+            Thread.sleep(30000);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (KeeperException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) throws Exception{
-//        Locks locks = new Locks();
-//        locks.start();
-//        List<Locks> locks = new ArrayList<>();
-//        locks.add(new Locks());locks.add(new Locks());
-//        List<Integer> assignUsers2 = locks.stream().collect(ArrayList::new,(a, b)->{
-////            a.add(b.getSessionTimeout());
-//            System.out.println("a="+a);
-//            System.out.println("b="+b);
-//        },null);
-//        System.out.println("aaa"+assignUsers2);
-//
-//        Files.readAllLines(Paths.get(""));
-
-//        StandardCharsets.UTF_8
-
-        System.out.println(Paths.get("Locks").toFile());
+        /*
+        共享锁在同一个进程中很容易实现，但是在跨进程或者在不同 Server 之间就不好实现了。Zookeeper 却很容易实现这个功能，
+        实现方式也是需要获得锁的 Server 创建一个 EPHEMERAL_SEQUENTIAL 目录节点，然后调用 getChildren方法获取当前的目
+        录节点列表中最小的目录节点是不是就是自己创建的目录节点，如果正是自己创建的，那么它就获得了这个锁，如果不是那么它就
+        调用 exists(String path, boolean watch) 方法并监控Zookeeper 上目录节点列表的变化，一直到自己创建的节点是列表
+        中最小编号的目录节点，从而获得锁，释放锁很简单，只要删除前面它自己所创建的目录节点就行了。
+        */
+        Stream.generate(() -> new Thread(Locks::run)).limit(10).parallel().forEach(Thread::start);
     }
 }
