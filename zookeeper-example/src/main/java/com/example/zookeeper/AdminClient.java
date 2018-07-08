@@ -12,14 +12,14 @@ import java.util.Date;
 
 public class AdminClient implements Watcher {
 
-    ZooKeeper zk;
-    String hostPort;
+    private ZooKeeper zk;
+    private String hostPort;
 
     public AdminClient(String hostPort) {
         this.hostPort = hostPort;
     }
 
-    void startZK() throws Exception {
+    public void startZK() throws Exception {
         zk = new ZooKeeper(hostPort,15000,this);
     }
 

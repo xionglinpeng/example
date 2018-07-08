@@ -32,18 +32,22 @@ public class Locks implements Watcher {
 
     private static final String ROOT = "/locks";
 
-    public Locks(String connectString) throws IOException{
+    public Locks(String connectString){
         this(connectString,DEFAULT_ZK_SESSION_TIMEOUT);
     }
 
-    public Locks(String connectString, int sessionTimeout) throws IOException{
-        zk = new ZooKeeper(connectString,sessionTimeout,this);
-    }
-
-    @PostConstruct
-    public void initializeRootNode() throws KeeperException, InterruptedException {
-        if (zk.exists(ROOT,false) == null) {
-            zk.create(ROOT,new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
+    public Locks(String connectString, int sessionTimeout){
+        try {
+            zk = new ZooKeeper(connectString,sessionTimeout,this);
+            if (zk.exists(ROOT,false) == null) {
+                zk.create(ROOT,new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (KeeperException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -107,38 +111,37 @@ public class Locks implements Watcher {
 
     public void check() throws KeeperException, InterruptedException {
         //创建自己的临时顺序节点
-        zk.create(ROOT + "/lock_", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
-            @Override
-            public void processResult(int code, String path, Object ctx, String node) {
-//                code : 0
-//                path : /locks/lock_
-//                ctx : null
-//                node : /locks/lock_0000000493
-                System.out.println(code+"<->"+path+"<->"+ctx+"<->"+node);
-                try {
-                    switch (KeeperException.Code.get(code)) {
-                        case CONNECTIONLOSS:
-                            check();
-                            break;
-                        case OK:
-                            myZNode = node;
-                            //去争取锁
-                            getLock();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        },null);
+//        zk.create(ROOT + "/lock_", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL, new AsyncCallback.StringCallback() {
+//            @Override
+//            public void processResult(int code, String path, Object ctx, String node) {
+////                code : 0
+////                path : /locks/lock_
+////                ctx : null
+////                node : /locks/lock_0000000493
+//                //注意，回调线程是一个单独的线性，并且所有的回调都是使用的同一个线程。
+//                try {
+//                    switch (KeeperException.Code.get(code)) {
+//                        case CONNECTIONLOSS:
+//                            check();
+//                            break;
+//                        case OK:
+//                            myZNode = node;
+//                            //去争取锁
+//                            getLock();
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        },null);
+        this.myZNode = zk.create(ROOT + "/lock_", new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
+        this.getLock();
     }
 
     public static void run(){
+        Locks locks = new Locks("192.168.56.2:2181,192.168.56.4:2181,192.168.56.5:2181");
         try {
-            Locks locks = new Locks("127.0.0.1:2181");
             locks.check();
-            Thread.sleep(30000);
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (KeeperException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -155,5 +158,7 @@ public class Locks implements Watcher {
         中最小编号的目录节点，从而获得锁，释放锁很简单，只要删除前面它自己所创建的目录节点就行了。
         */
         Stream.generate(() -> new Thread(Locks::run)).limit(10).parallel().forEach(Thread::start);
+        //是主线程阻塞，因为zookeeper使用的是守护线程，主线程退出后，守护线程就关闭了。
+        Thread.sleep(30000);
     }
 }

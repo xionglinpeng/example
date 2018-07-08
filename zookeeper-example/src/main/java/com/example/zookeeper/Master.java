@@ -1,6 +1,8 @@
 package com.example.zookeeper;
 
 import lombok.Data;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 
@@ -12,242 +14,124 @@ import java.util.Random;
 @Data
 public class Master implements Watcher {
 
+    private static final Logger logger = LogManager.getLogger(Master.class);
+
     ZooKeeper zk;
     String hostPort;
 
-    Random random = new Random();
-    String serverId = Integer.toHexString(random.nextInt());
+    String serverId = Integer.toHexString(new Random().nextInt());
     Boolean isLeader = false;
 
-    AsyncCallback.StringCallback masterCreateCallback = (rc,path,ctx,name)->{
-        switch (KeeperException.Code.get(rc)) {
-            case CONNECTIONLOSS:
-                checkMaster();
-                return;
-            case OK:
-                isLeader = true;
-                break;
-            case NODEEXISTS:
-                masterExists();
-            default:
-                isLeader = false;
-                System.out.println(rc);
-        }
-        System.out.println("I'm "+(isLeader?"":"not ")+"the leader");
-    };
-
-    void masterExists() {
-        zk.exists("/master",masterExistsWatcher,masterExistsCallback,null);
-    }
-
-    AsyncCallback.StatCallback masterExistsCallback = new AsyncCallback.StatCallback() {
-        @Override
-        public void processResult(int i, String s, Object o, Stat stat) {
-            switch (KeeperException.Code.get(i)) {
-                case CONNECTIONLOSS:
-                    masterExists();
-                    break;
-                case OK:
-                    //也许在监视的时候，主节点被删除了（是否删除由）stat == null判断，重新竞选主节点。
-                    if (stat == null) {
-                        runForMaster();
-                    }
-                    break;
-                default:
-                    checkMaster();
-                    break;
-            }
-        }
-    };
-
-    /**
-     * 监视主节点，如果主节点被删除了，会触发NodeDeleted事件，当前线程取竞选主节点。
-     */
-    Watcher masterExistsWatcher = e -> {
-        if(e.getType() == Event.EventType.NodeDeleted){
-            assert "/master".equals(e.getPath());
-            runForMaster();
-        }
-    };
-
-    public Master(String hostPort) {
+    public Master(String hostPort){
         this.hostPort = hostPort;
     }
 
-    void startZK() throws IOException{
+    public void startZK() throws IOException {
         zk = new ZooKeeper(hostPort,15000,this);
     }
 
-    void stopZK() throws InterruptedException{
+    public void stopZK() throws InterruptedException {
         zk.close();
     }
 
     @Override
     public void process(WatchedEvent watchedEvent) {
-        System.out.println(watchedEvent);
+
     }
 
-    void runForMaster(){
-        while (true){
-//            try {
-//                String s = zk.create(
-//                        //我们试着创建znode结点/master。如果这个znode结点存在，create就会失败.
-//                        //同时我们想在/master结点的数据字段保存对应这个服务器的唯一ID。
-//                        "/master",
-//                        //数据字段只能存储字节数组类型的数据，所以我们将int型转换为一个字节数组
-//                        serverId.getBytes(),
-//                        //如之前所提到，我们使用开放的ACL策略。
-//                        ZooDefs.Ids.OPEN_ACL_UNSAFE,
-//                        //我们创建的结点类型为EPHMERAL
-//                        CreateMode.EPHEMERAL);
-//                isLeader = true;
-//                break;
-//            } catch (KeeperException e) {
-//                isLeader = false;
-//                break;
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-            zk.create(
-                    //我们试着创建znode结点/master。如果这个znode结点存在，create就会失败.
-                    //同时我们想在/master结点的数据字段保存对应这个服务器的唯一ID。
-                    "/master",
-                    //数据字段只能存储字节数组类型的数据，所以我们将int型转换为一个字节数组
-                    serverId.getBytes(),
-                    //如之前所提到，我们使用开放的ACL策略。
-                    ZooDefs.Ids.OPEN_ACL_UNSAFE,
-                    //我们创建的结点类型为EPHMERAL
-                    CreateMode.EPHEMERAL,
-                    masterCreateCallback,
-                    null);
-//            if (checkMaster()){
-//                break;
-//            }
+    AsyncCallback.StringCallback masterCreateCallback = (rc,path,ctx,name) -> {
+        KeeperException.Code code = KeeperException.Code.get(rc);
+        switch (code) {
+            case CONNECTIONLOSS:
+                asyncCheckMater();
+                return;
+            case OK:
+                this.isLeader = true;
+                break;
+            default:
+                this.isLeader = false;
         }
+        System.out.println("我"+(this.isLeader?"":"没有")+"成为Leader。（"+code+"）");
+    };
 
-    }
+    AsyncCallback.DataCallback masterCheckCallback = (rc,path,ctx,name,stat) -> {
+        switch (KeeperException.Code.get(rc)) {
+            case CONNECTIONLOSS:
+                asyncCheckMater();
+            case NONODE:
+                asyncRunForMater();
+                return;
+        }
+    };
 
-    AsyncCallback.DataCallback masterCheckCallback =
-            (int rc, String path, Object ctx, byte[] data, Stat stat)->{
-                switch (KeeperException.Code.get(rc)) {
-                    case CONNECTIONLOSS:
-                        checkMaster();
-                        return;
-                    case NONODE:
-                        runForMaster();
-                        return;
-                }
-            };
-
-    void checkMaster(){
+    public void asyncCheckMater() {
         zk.getData("/master",false,masterCheckCallback,null);
     }
 
-//    boolean checkMaster() {
-//        while (true) {
-//            try {
-//                Stat stat = new Stat();
-//                byte[] data = zk.getData("/master",false,stat);
-//                isLeader = new String(data).equals(serverId);
-//                return true;
-//            } catch (KeeperException e) {
-//                e.printStackTrace();
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
+    public void asyncRunForMater(){
+        zk.create("/master",serverId.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL,masterCreateCallback,null);
+    }
 
-    List<String> workerList = new ArrayList<>();
-
-
-
-    void getTasks() {
-        zk.getChildren("/tasks",watchedEvent->{
-            if (watchedEvent.getType() == Event.EventType.NodeChildrenChanged) {
-                assert "/tasks".equals(watchedEvent.getPath());
-                getTasks();
+    public boolean syncCheckMaster() throws KeeperException,InterruptedException {
+        while (true) {
+            Stat stat = new Stat();
+            try {
+                byte[] data = zk.getData("/master",false,stat);
+                //如果获取的/master节点数据和当前进程的serverId相等，即表示当前进程为群首节点。
+                this.isLeader = new String(data).equals(serverId);
+                //已经检查完成了，直接返回true，退出循环。
+                return true;
+            } catch (KeeperException.NoNodeException e) {
+                //节点不存在，即表示创建/master的请求zookeeper服务器未才处理，返回false，让其再次发生请求。
+                return false;
+            } catch (KeeperException.ConnectionLossException e) {
+                System.out.println("获取/master节点连接丢失。");
             }
-        },(rc,path,ctx,children)->{
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    getTasks();
-                    break;
-                case OK:
-                    if (children != null) {
-                        assignTasks(children);
-                    }
-                    break;
-                default:
-                    System.out.println("getChiledren failed."+KeeperException.create(KeeperException.Code.get(rc))+path);
+        }
+    }
+
+
+    public void syncRunForMaster() throws KeeperException,InterruptedException {
+        while (true) {
+            try {
+                zk.create("/master",serverId.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL);
+                //创建成功，表示当前进制为群首结点，设置isLeader为true。
+                this.isLeader = true;
+                break;
+            } catch (KeeperException.NodeExistsException e) {
+                //节点以及存在异常，表示已有其他进程称为群首，设置isLeader为false。
+                this.isLeader = false;
+                break;
+            } catch (KeeperException.ConnectionLossException e){
+                System.out.println("创建/master节点连接丢失。");
+                //连接丢失，可能zookeeper服务器没有处理/master节点的创建请求，或者已经处理了创建的请求，但是返回到客户端的连接丢失
+                //所以，调用checkMaster()检查/master结点是否创建成功。
+                if(this.syncCheckMaster()) break;
             }
-        },null);
-    }
-
-    void deleteTask(String name) {
-
-    }
-
-    void assignTasks(List<String> tasks) {
-        tasks.forEach(this::getTaskData);
+        }
     }
 
 
-
-    void getTaskData(String task) {
-        zk.getData("/tasks/"+task,false,(rc,path,ctx,data,stat)->{
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    getTaskData(ctx.toString());
-                    break;
-                case OK:
-
-                    int worker = random.nextInt(workerList.size());
-                    String designatedWorker = "";
-
-                    String assignmentPath = "assign"+designatedWorker+"/"+ctx.toString();
-                    createAssignment(assignmentPath,data);
-                    break;
-                default:
-                    System.out.println("getChiledren failed." + KeeperException.create(KeeperException.Code.get(rc)) + path);
-            }
-        },task);
-    }
-
-    void createAssignment(String path,byte[] data) {
-        zk.create(path,data, ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT,(rc,p,ctx,name)->{
-            switch (KeeperException.Code.get(rc)) {
-                case CONNECTIONLOSS:
-                    createAssignment(p,(byte[]) ctx);
-                    break;
-                case OK:
-                    System.out.println("Task assigned correctly: "+name);
-                    deleteTask(name.substring(name.lastIndexOf("/")+1));
-                    break;
-                case NODEEXISTS:
-                    System.out.println("Task already assigned");
-                    break;
-                default:
-                    System.out.println("Error when trying to assign task."+KeeperException.create(KeeperException.Code.get(rc))+p);
-            }
-        },data);
-    }
-
-
-
-    public static void main(String[] args) throws Exception {
-
-        String hostPort = "192.168.56.2:2181";
+    public static void asyncExec(boolean async) throws Exception{
+        String hostPort = "192.168.56.2:2181,192.168.56.5:2181,192.168.56.5:2181";
         Master m = new Master(hostPort);
         m.startZK();
-        m.runForMaster();
-        if(m.isLeader){
-            System.out.println("I'm the leader");
-            //wait for a bit
-            Thread.sleep(60000);
+        if(async) {
+            m.asyncRunForMater();
+            Thread.sleep(3000);
         } else {
-            System.out.println("Someone else is the leader");
+            m.syncRunForMaster();
+            if(m.isLeader){
+                System.out.println("我是leader节点。");
+                Thread.sleep(60000);
+            } else {
+                System.out.println("我没有竞争到lerder节点。");
+            }
+            m.stopZK();
         }
-        m.stopZK();
+    }
+
+    public static void main(String[] args) throws Exception {
+        Master.asyncExec(true);
     }
 }
