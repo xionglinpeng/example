@@ -20,7 +20,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.data.Stat;
 
 /**
- * Synchronizing
+ * synchronizing
  * <p/>
  * Author By: junshan
  * Created Date: 2010-9-3 15:09:50
