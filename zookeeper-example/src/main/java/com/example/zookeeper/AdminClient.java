@@ -1,5 +1,6 @@
 package com.example.zookeeper;
 
+import lombok.Data;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -9,7 +10,7 @@ import org.apache.zookeeper.data.Stat;
 import javax.sound.midi.Soundbank;
 import java.util.Date;
 
-
+@Data
 public class AdminClient implements Watcher {
 
     private ZooKeeper zk;
@@ -23,7 +24,7 @@ public class AdminClient implements Watcher {
         zk = new ZooKeeper(hostPort,15000,this);
     }
 
-    void listState() throws KeeperException,InterruptedException {
+    public void listState() throws KeeperException,InterruptedException {
         try {
             Stat stat = new Stat();
             byte masterData[] = zk.getData("/master",false,stat);
