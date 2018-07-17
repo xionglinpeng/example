@@ -1,19 +1,21 @@
 package com.example.zookeeper.synchronizing;
 
+import com.google.common.util.concurrent.Service;
 import org.apache.zookeeper.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
 public class SynchQueue implements Watcher {
 
-    static final int DEFAULT_INITIAL_CAPACITY = 1 << 4;//aka 16
+    static final int DEFAULT_INITIAL_CAPACITY = 0B10000;//aka 16
 
-    static final int DEFAULT_ZK_SESSION_TIMEOUT = 15000;
+    static final int DEFAULT_ZK_SESSION_TIMEOUT = 0B11101010011000; //aka 15000
 
     int initCapacity = 0;
 
@@ -80,7 +82,7 @@ public class SynchQueue implements Watcher {
         try {
 
 
-            zk.create(root/+"/"+name,new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL_SEQUENTIAL);
+            zk.create(root+"/"+name,new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL_SEQUENTIAL);
             //获取队列中的元素数量
             List<String> childrens = zk.getChildren(root,false);
             //如果队列中的元素数量没有满
@@ -96,4 +98,12 @@ public class SynchQueue implements Watcher {
         }
     }
 
+    public static void main(String[] args) {
+
+        System.out.println(0b11101010011000);
+
+        HashMap map = new HashMap();
+        ArrayList list = new ArrayList();
+        list.add("");
+    }
 }

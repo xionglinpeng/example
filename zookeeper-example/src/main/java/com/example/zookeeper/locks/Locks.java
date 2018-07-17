@@ -157,7 +157,7 @@ public class Locks implements Watcher {
         调用 exists(String path, boolean watch) 方法并监控Zookeeper 上目录节点列表的变化，一直到自己创建的节点是列表
         中最小编号的目录节点，从而获得锁，释放锁很简单，只要删除前面它自己所创建的目录节点就行了。
         */
-        Stream.generate(() -> new Thread(Locks::run)).limit(10).parallel().forEach(Thread::start);
+        Stream.generate(() -> new Thread(Locks::run)).limit(0B1010).parallel().forEach(Thread::start);
         //是主线程阻塞，因为zookeeper使用的是守护线程，主线程退出后，守护线程就关闭了。
         Thread.sleep(30000);
     }
