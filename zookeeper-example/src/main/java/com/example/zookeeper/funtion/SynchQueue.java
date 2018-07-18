@@ -1,19 +1,17 @@
-package com.example.zookeeper.synchronizing;
+package com.example.zookeeper.funtion;
 
-import com.google.common.util.concurrent.Service;
+import com.example.zookeeper.ZKConst;
 import org.apache.zookeeper.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
 public class SynchQueue implements Watcher {
 
-    static final int DEFAULT_INITIAL_CAPACITY = 0B10000;//aka 16
+    static final int DEFAULT_INITIAL_CAPACITY = 0B11;//0B10000;//aka 16
 
     static final int DEFAULT_ZK_SESSION_TIMEOUT = 0B11101010011000; //aka 15000
 
@@ -36,7 +34,7 @@ public class SynchQueue implements Watcher {
         try {
             zk = new ZooKeeper(connectString,sessionTimeout,this);
             if (Objects.isNull(zk.exists(root,false))) {
-                zk.create("/synchronizing",new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
+                zk.create(root,new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -59,7 +57,10 @@ public class SynchQueue implements Watcher {
     public void process(WatchedEvent watchedEvent) {
         if (watchedEvent.getType() == Event.EventType.NodeCreated &&
                 watchedEvent.getPath().equals(root+"/start")) {
-            System.out.println("队列元素已经满了。");
+            System.out.println("The queue element is full.");
+            synchronized (this){
+                this.notifyAll();
+            }
         }
     }
 
@@ -78,18 +79,19 @@ public class SynchQueue implements Watcher {
     }
 
     public void addQueue() {
-        this.watcherQueueFull();
+        this.watcherQueueFull();//监视队列是否满了
         try {
-
-
             zk.create(root+"/"+name,new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL_SEQUENTIAL);
-            //获取队列中的元素数量
-            List<String> childrens = zk.getChildren(root,false);
-            //如果队列中的元素数量没有满
-            if (childrens.size() < initCapacity) {
-
-            } else {
-                zk.create(root+"/start",new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.PERSISTENT);
+            synchronized (this) {
+                //获取队列中的元素数量
+                List<String> childrens = zk.getChildren(root,false);
+                //如果队列中的元素数量没有满
+                if (childrens.size() < initCapacity) {
+                    //阻塞当前进程，即当前进程不能再添加了
+                    this.wait();
+                } else {
+                    zk.create(root+"/start",new byte[0],ZooDefs.Ids.OPEN_ACL_UNSAFE,CreateMode.EPHEMERAL);
+                }
             }
         } catch (KeeperException e) {
             e.printStackTrace();
@@ -99,11 +101,7 @@ public class SynchQueue implements Watcher {
     }
 
     public static void main(String[] args) {
-
-        System.out.println(0b11101010011000);
-
-        HashMap map = new HashMap();
-        ArrayList list = new ArrayList();
-        list.add("");
+        SynchQueue queue = new SynchQueue("/SYNCH-QUEUE",ZKConst.CONNECT_STRING);
+        queue.addQueue();
     }
 }
