@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.IntegerSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -45,10 +46,16 @@ public class KafkaProducerDemo implements Runnable{
             }
         }
     }
+    static final int hash(Object key) {
+        int h;
+        return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
+    }
 
     public static void main(String[] args) {
-        KafkaProducerDemo kafkaProducerDemo = new KafkaProducerDemo("test");
-        Thread thread = new Thread(kafkaProducerDemo);
-        thread.start();
+//        KafkaProducerDemo kafkaProducerDemo = new KafkaProducerDemo("test");
+//        Thread thread = new Thread(kafkaProducerDemo);
+//        thread.start();
+        System.out.println((16-1) & hash("45645645dghfgh"));
+
     }
 }
