@@ -233,11 +233,15 @@ public class TestStream {
     public void collectMap() {
         Stream<User> user = StreamCreate.users();
 //        Map<String,Integer> map = user.collect(Collectors.toMap(User::getName,User::getAge));
-        Map<String,User> map = user.collect(Collectors.toMap(User::getName,Function.identity()));
-        Map<String,User> map1 = user.collect(Collectors.toMap(User::getName,Function.identity(),(a,b)->a,TreeMap::new));
-        System.out.println(map);
+//        Map<String,User> map = user.collect(Collectors.toMap(User::getName,Function.identity()));
+        Map<String,User> map1 = user.collect(Collectors.toMap(User::getName,Function.identity(),(a,b)->{
+            System.out.println(a+"======"+b);
 
-        Stream<Locale> locale = Stream.of(Locale.getAvailableLocales());
+            return a;
+        },TreeMap::new));
+        System.out.println(map1);
+
+//        Stream<Locale> locale = Stream.of(Locale.getAvailableLocales());
 //        Map<String,String> languageName = locale.collect(
 //                Collectors.toMap(
 //                        Locale::getDisplayLanguage,
@@ -245,16 +249,16 @@ public class TestStream {
 //                        (o,n)->o));
 //        languageName.forEach((k,v)-> System.out.println(k+"="+v));
 
-        Map<String,Set<String>> countrylanguageSets = locale.collect(
-                Collectors.toMap(
-                        Locale::getDisplayLanguage,
-                        s->Collections.singleton(s.getDisplayLanguage()),
-                        (a,b)->{
-                            Set<String> r = new HashSet<>(a);
-                            r.addAll(b);
-                            return r;
-                        }));
-        countrylanguageSets.forEach((k,v)-> System.out.println(k+"="+v));
+//        Map<String,Set<String>> countrylanguageSets = locale.collect(
+//                Collectors.toMap(
+//                        Locale::getDisplayLanguage,
+//                        s->Collections.singleton(s.getDisplayLanguage()),
+//                        (a,b)->{
+//                            Set<String> r = new HashSet<>(a);
+//                            r.addAll(b);
+//                            return r;
+//                        }));
+//        countrylanguageSets.forEach((k,v)-> System.out.println(k+"="+v));
     }
 
     @Test

@@ -17,6 +17,7 @@ public class Clock implements Runnable{
         try {
             for (;;){
                 Examination examination = studentDelayQueue.take();
+                if (stop) break;
                 examination.executor(Examination.SUBMIT);
             }
         } catch (InterruptedException e) {

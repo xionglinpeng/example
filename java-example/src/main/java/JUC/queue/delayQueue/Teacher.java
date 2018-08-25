@@ -27,18 +27,18 @@ public class Teacher implements Runnable {
 
     //接收学生提交的试卷
     public void receiveExaminationPaper(){
-        try {
-            for (;;) {
-                if (alreadySubmitPaperNum == studentDelayQueue.size()) {
-                    break;
-                }
-                ExaminationPaper examinationPaper = platform.getPlatform().take();
-//                System.out.printf("老师接收到学生的试卷：%s\n",examinationPaper);
-                alreadySubmitPaperNum++;
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            for (;;) {
+//                if (alreadySubmitPaperNum == studentDelayQueue.size()) {
+//                    break;
+//                }
+////                ExaminationPaper examinationPaper = platform.getPlatform().take();
+////                System.out.printf("老师接收到学生的试卷：%s\n",examinationPaper);
+//                alreadySubmitPaperNum++;
+//            }
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 
     //时间到期了，强制未完成的学生交卷
