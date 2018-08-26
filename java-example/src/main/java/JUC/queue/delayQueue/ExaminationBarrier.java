@@ -15,7 +15,8 @@ public class ExaminationBarrier extends AbstractExamination {
 
         switch (behavior) {
             case SUBMIT:
-                Thread.currentThread().interrupt();
+//                Thread.currentThread().interrupt();
+                Clock.stop = true;
                 teacher.forceSunmit();
         }
 
