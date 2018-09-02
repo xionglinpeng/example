@@ -3,9 +3,7 @@ package jcf;
 import org.omg.CORBA.TRANSACTION_MODE;
 
 import java.io.Serializable;
-import java.util.AbstractMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneable, Serializable {
 
@@ -102,14 +100,53 @@ public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneab
     final float loadFactor;
 
 
+
+    public MyHashMap(){
+        this.loadFactor = DEFAULT_LOAD_FACTOR;
+    }
+
+
+
     static final int hash(Object key) {
         int h;
         return (key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
     }
 
 
+    public V get(Object key) {
+        Node<K,V> e;
+        return (e = getNode(hash(key),key)) == null ? null : e.value;
+    }
+
+
+    final Node<K,V> getNode(int hash,Object key) {
+        Node<K,V>[] tab; Node<K,V> first, e; int n; K k;
+        //首先将key hash之后取得所定位的桶
+        //如果桶为空，直接返回null
+        if ((tab = table) != null && (n = tab.length) > 0 && (first = tab[(n - 1) & hash]) != null) {
+            //判断桶的第一个位置，的key是否为查询的key，是就直接返回value
+            if (first.hash == hash && ((k = first.key) == key || (key != null && key.equals(k))))
+                return first;
+            if ((e = first.next) != null) {
+                //如果第一个不匹配，则判断它的下一个是红黑树还是链表
+                if (first instanceof TreeNode)
+                    //红黑树就按照数的方式查找返回值
+                    return null;
+                //不然就按照链表的方式遍历匹配返回值
+                do {
+                    if (e.hash == hash && ((k = e.key) == key || (key != null && key.equals(k))))
+                        return e;
+                }while ((e = e.next) != null);
+            }
+        }
+        return null;
+    }
+
+
+
+
     public V put(K key,V value) {
-        return putVal(hash(key),key,value);
+        return putVal(hash(key), key, value,false,true);
     }
 
     /**
@@ -122,7 +159,7 @@ public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneab
      * @param evict if false, the table is in creation mode.
      * @return previous value, or null if none
      */
-    final V putVal(int hash, K key, V value) {
+    final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
         Node<K,V>[] tab; Node<K,V> p; int n, i;
         //判断当前桶是否为空，空的就需要初始化
         if ((tab = table) == null || (n = tab.length) == 0)
@@ -134,19 +171,49 @@ public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneab
             tab[i] = newNode(hash,key,value,null);
         else {
             Node<K,V> e; K k;
-
-
-
+            //如果当前桶有值（hash冲突），那么就要比较当前桶中的key，key的hashCode与写入的key是否相等
+            //相等就赋值给e
+            if (p.hash == hash && ((k = p.key) == key || (key != null && key.equals(k))))
+                e = p;
+            //如果当前桶为红黑数，那么就要按照红黑树的方式写入数据
+            else if (p instanceof TreeNode)
+                e = p;
+            else {//如果是个链表
+                //就需要将当前key，value封装成一个新节点，写入到当前桶的后面（形成链表）
+                for (int binCount = 0 ;; ++binCount) {
+                    if ((e = p.next) == null) {
+                        p.next = newNode(hash,key,value,null);
+                        //判断当前链表的大小是否大于预设的阈值，大于就要转换为红黑树
+                        if (binCount >= TREEIFY_THRESHOLD - 1)
+                            treeifyBin(tab,hash);
+                        break;
+                    }
+                    //如果在遍历过程中找到key相同时直接退出遍历
+                    if (e.hash == hash && ((k = e.key) == key || (key != null && key.equals(k))))
+                        break;
+                    p = e;
+                }
+            }
+            //如果e != null，就相当于存在相同的key，那就需要将值覆盖
+            if (e != null) {
+                V oldValue = e.value;
+                if (!onlyIfAbsent || oldValue == null)
+                    e.value = value;
+                //空实现，有子类实现
+                afterNodeAccess(e);
+                return oldValue;
+            }
         }
-
-
-
-
-
-
-
-
+        //最后判断是否需要进行扩容
+        if (++size > threshold)
+            resize();
+        afterNodeInsertion(evict);
+        return null;
     }
+
+    //回调允许LinkedHashMap后操作
+    void afterNodeAccess(Node<K,V> p) {}
+    void afterNodeInsertion(boolean evict) {}
 
 
     final Node<K,V>[] resize(){
@@ -154,14 +221,34 @@ public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneab
     }
 
 
+    final void treeifyBin(Node<K,V>[] tab, int hash){}
+
 
     Node<K,V> newNode(int hash,K key, V value, Node<K,V> next) {
         return new Node<>(hash,key,value,next);
     }
 
-
     @Override
-    public Set<Entry<K, V>> entrySet() {
+    public Set<Map.Entry<K, V>> entrySet() {
         return null;
+    }
+
+    static class Entry<K,V> extends MyHashMap.Node<K,V> {
+        MyHashMap.Entry<K,V> before, after;
+        Entry(int hash, K key, V value, MyHashMap.Node<K,V> next) {
+            super(hash, key, value, next);
+        }
+    }
+
+
+    static final class TreeNode<K,V> extends Entry<K,V> {
+        MyHashMap.TreeNode<K,V> parent;  // red-black tree links
+        MyHashMap.TreeNode<K,V> left;
+        MyHashMap.TreeNode<K,V> right;
+        MyHashMap.TreeNode<K,V> prev;    // needed to unlink next upon deletion
+        boolean red;
+        TreeNode(int hash, K key, V val, MyHashMap.Node<K,V> next) {
+            super(hash, key, val, next);
+        }
     }
 }
