@@ -1,5 +1,6 @@
 package jcf;
 
+import org.omg.CORBA.INITIALIZE;
 import org.omg.CORBA.TRANSACTION_MODE;
 
 import java.io.Serializable;
@@ -15,7 +16,7 @@ public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneab
     /**
      * 桶最大值。
      */
-    static final int MAXINUM_CPAPCITY = 1 << 30; //aka 1073741824
+    static final int MAXIMUM_CAPACITY = 1 << 30; //aka 1073741824
 
     /**
      * 默认的负载因子（0.75）
@@ -91,6 +92,7 @@ public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneab
 
     /**
      * 桶大小，可在初始化时显式指定。
+     * 调整大小的下一个大小值(容量*负载因子)。
      */
     int threshold;
 
@@ -99,6 +101,36 @@ public class MyHashMap<K,V> extends AbstractMap<K,V> implements Map<K,V>,Cloneab
      */
     final float loadFactor;
 
+    /**
+     * Returns a power of two size for the given target capacity.
+     */
+    static final int tableSizeFor(int cap) {
+        int n = cap - 1;
+        n |= n >>> 1;
+        n |= n >>> 2;
+        n |= n >>> 4;
+        n |= n >>> 8;
+        n |= n >>> 16;
+        return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
+    }
+
+
+    public MyHashMap(int initialCapacity, float loadFactor) {
+        if (initialCapacity < 0)
+            throw new IllegalArgumentException("Illegal initial capacity: " +
+                    initialCapacity);
+        if (initialCapacity > MAXIMUM_CAPACITY)
+            initialCapacity = MAXIMUM_CAPACITY;
+        if (loadFactor <= 0 || Float.isNaN(loadFactor))
+            throw new IllegalArgumentException("Illegal load factor: " +
+                    loadFactor);
+        this.loadFactor = loadFactor;
+        this.threshold = tableSizeFor(initialCapacity);
+    }
+
+    public MyHashMap(int initialCapacity) {
+        this(initialCapacity,DEFAULT_LOAD_FACTOR);
+    }
 
 
     public MyHashMap(){
