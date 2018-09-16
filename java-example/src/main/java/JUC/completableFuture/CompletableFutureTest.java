@@ -1,4 +1,4 @@
-package JUC.CompletableFuture;
+package JUC.completableFuture;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -254,7 +254,7 @@ public class CompletableFutureTest {
     public static void get(boolean i) throws ExecutionException, InterruptedException {
 //        String result = null;
 //        try {
-//            result = CompletableFuture.supplyAsync(()->{
+//            result = completableFuture.supplyAsync(()->{
 //                if (i) {
 //                    return "hello world!";
 //                } else {
@@ -268,10 +268,10 @@ public class CompletableFutureTest {
 //        }
 //        System.out.println(result);
 
-//        CompletableFuture<String> A = CompletableFuture.supplyAsync(()->"Hello World!").toCompletableFuture();
-//        System.out.println(A.toString());//java.util.concurrent.CompletableFuture@7699a589[Not completed]
+//        completableFuture<String> A = completableFuture.supplyAsync(()->"Hello World!").toCompletableFuture();
+//        System.out.println(A.toString());//java.util.concurrent.completableFuture@7699a589[Not completed]
 //        A.join();
-//        System.out.println(A.toString());//java.util.concurrent.CompletableFuture@7699a589[Completed normally]
+//        System.out.println(A.toString());//java.util.concurrent.completableFuture@7699a589[Completed normally]
 
 
 
