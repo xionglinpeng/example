@@ -1,9 +1,7 @@
 package JUC.completableFuture;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 public class CompletableFutureTest {
@@ -237,7 +235,11 @@ public class CompletableFutureTest {
         })).join();
     }
 
-    public static void exceptionally(boolean i){
+    public static void err(){
+        throw new RuntimeException("2");
+    }
+
+    public static void exceptionally(boolean i) {
         String result = CompletableFuture.supplyAsync(()->{
             if (i) {
                 return "hello world!";
@@ -336,7 +338,12 @@ public class CompletableFutureTest {
     }
 
     public static void main(String[] args) throws Exception {
-        cancel();
+        Thread thread1 = new Thread(()->{exceptionally(true);});thread1.start();
+        Thread thread2 = new Thread(()->{sleep(600000);});thread2.start();
+
+        sleep(4000);
+        System.out.println("sssss"+thread1.getState());
+//        exceptionally(true);
 //        long t = System.currentTimeMillis();
 //        System.out.println(TimeUnit.SECONDS.convert(System.currentTimeMillis()-t,TimeUnit.MILLISECONDS));
     }
