@@ -1,0 +1,13 @@
+# Auto Configure
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.xlp.example.configuration.HelloWorldAutoConfiguration
+
+# Initializers
+org.springframework.context.ApplicationContextInitializer=\
+com.xlp.example.initializer.HelloWorldApplicationContextInitializer,\
+com.xlp.example.initializer.AfterHelloWorldApplicationContextInitializer
+
+# Application Listeners
+org.springframework.context.ApplicationListener=\
+com.xlp.example.listener.AfterHelloWorldApplicationListener,\
+com.xlp.example.listener.HelloWorldApplicationListener
