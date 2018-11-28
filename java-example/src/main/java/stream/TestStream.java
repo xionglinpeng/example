@@ -75,6 +75,10 @@ public class TestStream {
     @Test
     public void findFirst(){
         Optional<String> optional = StreamCreate.program().findFirst();
+        System.out.println(StreamCreate.program().filter(s -> {
+            System.out.println("s = "+s);
+            return s.contains("p");
+        }).findFirst().orElseGet(null));
     }
 
     @Test
@@ -402,5 +406,12 @@ public class TestStream {
             inListSplit.add(doubles.stream().skip(i*1000).limit(1000).collect(Collectors.toList()));
         }
         System.out.println("分组耗时："+(System.currentTimeMillis() - statTime));
+    }
+
+    @Test
+    public void optional1(){
+        Optional.of(null).ifPresent(s->{
+            System.out.println(s);
+        });
     }
 }
