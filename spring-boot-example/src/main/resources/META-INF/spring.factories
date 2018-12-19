@@ -11,3 +11,7 @@ com.xlp.example.initializer.AfterHelloWorldApplicationContextInitializer
 org.springframework.context.ApplicationListener=\
 com.xlp.example.listener.AfterHelloWorldApplicationListener,\
 com.xlp.example.listener.HelloWorldApplicationListener
+
+# Run Listeners
+org.springframework.boot.SpringApplicationRunListener=\
+com.xlp.example.runListener.HelloWoldRunListener
