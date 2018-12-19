@@ -40,10 +40,78 @@ public abstract class CacheLockAspectSupport extends CacheAspectSupport {
     private Object execute(CacheOperationInvoker invoker,Method method, CacheOperationContexts contexts){
 
         CacheLockOperationContext context = contexts.get(CacheLockOperation.class).iterator().next();
-        Object o = context.generateKey(new Object());
-        System.out.println(o);
-        return invokeOperation(invoker);
+
+        //处理锁的增加
+        processAddCacheLock(contexts.get(CacheLockOperation.class));
+        Object o;
+        try {
+            o = invokeOperation(invoker);
+
+
+
+        } finally {
+            //处理锁的释放
+            processReleaseCacheLock(contexts.get(CacheLockOperation.class));
+        }
+        return o;
     }
+
+
+    /**
+     * 处理增加缓存锁
+     * @param contexts
+     */
+    private void processAddCacheLock(Collection<CacheLockOperationContext> contexts) {
+
+        contexts.forEach(context -> {
+            //判断是否满足condition条件
+            if (this.isConditionPassing(context,null)) {
+
+
+                performCacheLock(context,(CacheLockOperation) context.getOperation(),null);
+            }
+        });
+    }
+
+    /**
+     * 执行添加缓存锁
+     * @param context
+     * @param operation
+     * @param result
+     */
+    private void performCacheLock(CacheLockOperationContext context, CacheLockOperation operation, Object result) {
+        Object key = context.generateKey(result);
+        System.out.println(key);
+    }
+
+
+    /**
+     * 处理释放缓存锁
+     */
+    private void processReleaseCacheLock(Collection<CacheLockOperationContext> contexts) {
+
+    }
+
+
+
+
+    /**
+     * condition条件判断
+     * @param context
+     * @param result
+     * @return
+     */
+    private boolean isConditionPassing(CacheLockOperationContext context,Object result) {
+        boolean passing = context.isConditionPassing(result);
+        if (!passing && logger.isTraceEnabled()) {
+            logger.trace("Cache condition failed on method " + context.getMethod() +
+                    " for operation " + context.getOperation());
+        }
+        return passing;
+    }
+
+
+
 
     private class CacheOperationContexts{
 
@@ -80,5 +148,11 @@ public abstract class CacheLockAspectSupport extends CacheAspectSupport {
         protected Object generateKey(Object result) {
             return super.generateKey(result);
         }
+
+        @Override
+        protected boolean isConditionPassing(Object result) {
+            return super.isConditionPassing(result);
+        }
+
     }
 }

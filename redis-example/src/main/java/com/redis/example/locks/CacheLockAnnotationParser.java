@@ -61,13 +61,17 @@ public class CacheLockAnnotationParser implements CacheAnnotationParser, Seriali
         CacheLockOperation.Builder builder = new CacheLockOperation.Builder();
         builder.setName(ae.toString());
         builder.setCacheNames(cacheLock.cacheNames());
-////        builder.setCondition(cacheLock.condition());
+        builder.setCondition(cacheLock.condition());
 ////        builder.setUnless(cacheLock.unless());
         builder.setKey(cacheLock.key());
         builder.setKeyGenerator(cacheLock.keyGenerator());
         builder.setCacheManager(cacheLock.cacheManager());
         builder.setCacheResolver(cacheLock.cacheResolver());
 // //       builder.setSync(cacheLock.sync());
+
+        builder.setExpire(cacheLock.expire());
+        builder.setTimeUnit(cacheLock.timeUnit());
+
 
         defaultConfig.applyDefault(builder);
         CacheLockOperation op = builder.build();
