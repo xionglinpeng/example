@@ -52,6 +52,8 @@ public @interface CacheLock {
      */
     String cacheResolver() default "";
 
+    String condition() default "";
+
     /**
      * 锁有效期，默认5秒。
      */

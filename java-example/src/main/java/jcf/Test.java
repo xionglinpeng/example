@@ -45,10 +45,10 @@ public class Test {
 //        System.out.println(2*2*2*2*2*2*2);
 //        System.out.println(tableSizeFor(64));
 
-
-        Map<String,Object> map = new HashMap<>(2,0.75f);
+        System.out.println(1<<1);
+        Map<String,Object> map = new HashMap<>(1<<1,1);
         map.put("name","小红");
-
+        map.put("name1","小红1");
         // 1 0 0 0           1 0 0 0 0     0 1 1 1 1
         // 0 1 0 1  0        0 0 1 0 1     0 0 1 0 1
         // 1 1 0 1  1        0 1 1 0 1     0 1 1 0 1

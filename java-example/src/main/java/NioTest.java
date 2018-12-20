@@ -1,3 +1,6 @@
+import net.coobird.thumbnailator.Thumbnails;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -47,6 +50,10 @@ public class NioTest {
 
 
     public static void main(String[] args) throws Exception{
-
+        File file = new File("");
+        Thumbnails.of("C:\\Users\\HP\\Desktop\\123.jpg")
+                .scale(1f)
+                .outputQuality(0.5f)
+                .toFile("C:\\Users\\HP\\Desktop\\aaaaa.jpg");
     }
 }
