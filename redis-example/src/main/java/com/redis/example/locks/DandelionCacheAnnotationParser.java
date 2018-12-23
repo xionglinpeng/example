@@ -18,7 +18,7 @@ import java.util.Objects;
  * 缓存注解解析器
  * @see org.springframework.cache.annotation.SpringCacheAnnotationParser
  */
-public class CacheLockAnnotationParser implements CacheAnnotationParser, Serializable {
+public class DandelionCacheAnnotationParser implements CacheAnnotationParser, Serializable {
 
     @Override
     public Collection<CacheOperation> parseCacheAnnotations(Class<?> type) {

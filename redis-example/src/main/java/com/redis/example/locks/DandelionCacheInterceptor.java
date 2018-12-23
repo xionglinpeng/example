@@ -15,15 +15,15 @@ import java.lang.reflect.Method;
  *
  * @see org.springframework.cache.interceptor.CacheInterceptor
  */
-public class CacheLockInterceptor extends CacheLockAspectSupport implements MethodInterceptor {
+public class DandelionCacheInterceptor extends DandelionCacheAspectSupport implements MethodInterceptor {
 
     private StringRedisTemplate redisTemplate;
 
-    public CacheLockInterceptor() {
+    public DandelionCacheInterceptor() {
 
     }
 
-    public CacheLockInterceptor(StringRedisTemplate redisTemplate) {
+    public DandelionCacheInterceptor(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

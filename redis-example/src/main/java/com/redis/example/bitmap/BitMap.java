@@ -16,6 +16,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Component
 public class BitMap implements CommandLineRunner {
@@ -39,10 +42,7 @@ public class BitMap implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
-        Random random = new Random();
-        for (int i = 0; i < 365; i++) {
-            operations.setBit(KEY,i,isSign(random));
-        }
+        setbit();
 
         for (byte b : operations.get(KEY).getBytes(StandardCharsets.UTF_8)) {
             System.out.println(b+" = "+Integer.toBinaryString(b));
@@ -102,37 +102,93 @@ public class BitMap implements CommandLineRunner {
         longs.forEach(l->{
             System.out.println(l+" : "+Integer.toBinaryString(l.intValue()));
         });
-        s();
+        bitop();
     }
 
-    private void s(){
+    /**
+     * 模拟一年365天用户签到记录，1表示签到，0表示未签到。
+     */
+    private void setbit(){
+        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+        Random random = new Random();
+        for (int i = 0; i < 365; i++) {
+            int b = random.nextInt(0B10);
+            operations.setBit("bitmap",i, b == 1);
+            System.out.print(b);
+        }
+        System.out.println();
+    }
+
+    private void bitop(){
+        ValueOperations<Object, Object> operations = redisTemplate.opsForValue();
         //逻辑并
         RedisStringCommands.BitOperation and = RedisStringCommands.BitOperation.AND;
+        //逻辑或
         RedisStringCommands.BitOperation not = RedisStringCommands.BitOperation.NOT;
+        //逻辑异或
         RedisStringCommands.BitOperation or = RedisStringCommands.BitOperation.OR;
+        //逻辑非
         RedisStringCommands.BitOperation xor = RedisStringCommands.BitOperation.XOR;
-        //与运算
-        ValueOperations<Object, Object> operations = redisTemplate.opsForValue();
-        Integer random = new Random().nextInt(1000);
-        System.out.println(random);
-        operations.set("{n}a",random);
-        operations.setBit("{n}b",0,true);
-        System.out.println(operations.get("{n}b"));
-        for (byte aByte : operations.get("{n}b").toString().getBytes()) {
-            System.out.println(aByte+" = "+Integer.toBinaryString(aByte));
-        }
+        //设置{o}:a = 0101
+        operations.setBit("{bitop}:a",0,false);
+        operations.setBit("{bitop}:a",1,true);
+        operations.setBit("{bitop}:a",2,false);
+        operations.setBit("{bitop}:a",3,true);
+        //设置{o}:b = 0110
+        operations.setBit("{bitop}:b",0,false);
+        operations.setBit("{bitop}:b",1,true);
+        operations.setBit("{bitop}:b",2,true);
+        operations.setBit("{bitop}:b",3,false);
 
-        Long andLong = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
-            connection.bitOp(and, "{n}c".getBytes(), "{n}a".getBytes(),"{n}b".getBytes()));
-        System.out.println(andLong);
-        System.out.println(operations.get("{n}c"));
-//        Long notLong = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
-//            connection.bitOp(or, "".getBytes(), "".getBytes()));
-//        Long orLong = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
-//            connection.bitOp(or, "".getBytes(), "".getBytes()));
-//        Long xorLong = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
-//            connection.bitOp(xor, "".getBytes(), "".getBytes()));
-
+        System.out.println("bitOp:A = 0101");
+        System.out.println("bitOp:B = 0110");
+        //用于输出{bitop}:c
+        Supplier<String> printBitOpC = ()->{
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < 4; i++) {
+                Boolean bit = operations.getBit("{bitop}:c", i);
+                stringBuilder.append(bit?1:0);
+            }
+            return stringBuilder.toString();
+        };
+        //逻辑运算（不包括非）
+        Consumer<RedisStringCommands.BitOperation> bitOp = operation-> {
+            Long execute = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
+                    connection.bitOp(operation, "{bitop}:c".getBytes(), "{bitop}:a".getBytes(), "{bitop}:b".getBytes()));
+            System.out.print("实际结果："+printBitOpC.get()+"  ");
+            System.out.println("execute = "+execute);
+        };
+        //逻辑运算：非
+        Consumer<String> bitOpNot = key-> {
+            Long execute = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
+                    connection.bitOp(not, "{bitop}:c".getBytes(), key.getBytes()));
+            System.out.print("实际结果："+printBitOpC.get()+"  ");
+            System.out.println("execute = "+execute);
+        };
+        //逻辑并运算
+        System.out.print("AND:预期结果：0100,  ");
+        bitOp.accept(and);
+        //逻辑或运算
+        System.out.print("OR :预期结果：0111,  ");
+        bitOp.accept(or);
+        //逻辑异或运算
+        System.out.print("XOR:预期结果：0011,  ");
+        bitOp.accept(xor);
+        //逻辑非运算
+        System.out.print("NOT:{bitop}:a->预期结果：1010,  ");
+        bitOpNot.accept("{bitop}:a");
+        System.out.print("NOT:{bitop}:b->预期结果：1001,  ");
+        bitOpNot.accept("{bitop}:b");
+        /*
+        输出结果：
+        bitOp:A = 0101
+        bitOp:B = 0110
+        AND:预期结果：0100,  实际结果：0100  execute = 1
+        OR :预期结果：0111,  实际结果：0111  execute = 1
+        XOR:预期结果：0011,  实际结果：0011  execute = 1
+        NOT:{bitop}:a->预期结果：1010,  实际结果：1010  execute = 1
+        NOT:{bitop}:b->预期结果：1001,  实际结果：1001  execute = 1
+        */
         //CROSSSLOT Keys in request don't hash to the same slot
     }
 
@@ -181,7 +237,7 @@ public class BitMap implements CommandLineRunner {
 
 
 
-    private boolean isSign(Random random){
+    private boolean isBit(Random random){
         return random.nextInt(0B10) == 1;
     }
 }

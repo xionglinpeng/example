@@ -1,6 +1,7 @@
 package com.redis.example.locks;
 
 import org.springframework.aop.framework.AopProxyUtils;
+import org.springframework.cache.Cache;
 import org.springframework.cache.interceptor.CacheAspectSupport;
 import org.springframework.cache.interceptor.CacheOperation;
 import org.springframework.cache.interceptor.CacheOperationInvoker;
@@ -14,11 +15,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 缓存方面支持
  */
-public abstract class CacheLockAspectSupport extends CacheAspectSupport {
+public abstract class DandelionCacheAspectSupport extends CacheAspectSupport {
 
     protected Class<?> getTargetClass(Object target) {
         return AopProxyUtils.ultimateTargetClass(target);
@@ -41,7 +43,7 @@ public abstract class CacheLockAspectSupport extends CacheAspectSupport {
 
         CacheLockOperationContext context = contexts.get(CacheLockOperation.class).iterator().next();
 
-        //处理锁的增加
+        //加锁
         processAddCacheLock(contexts.get(CacheLockOperation.class));
         Object o;
         try {
@@ -50,7 +52,7 @@ public abstract class CacheLockAspectSupport extends CacheAspectSupport {
 
 
         } finally {
-            //处理锁的释放
+            //释放锁
             processReleaseCacheLock(contexts.get(CacheLockOperation.class));
         }
         return o;
@@ -81,7 +83,16 @@ public abstract class CacheLockAspectSupport extends CacheAspectSupport {
      */
     private void performCacheLock(CacheLockOperationContext context, CacheLockOperation operation, Object result) {
         Object key = context.generateKey(result);
-        System.out.println(key);
+        Collection<? extends DandelionCache> caches = context.getCaches();
+        for (DandelionCache cache : caches) {
+            Object value = System.currentTimeMillis();
+            addLock(cache,key,value);
+        }
+        System.out.println("Lockkey = "+key);
+    }
+
+    private void addLock(DandelionCache cache,Object key,Object value){
+        cache.putLock(key,value,null);
     }
 
 
@@ -154,5 +165,10 @@ public abstract class CacheLockAspectSupport extends CacheAspectSupport {
             return super.isConditionPassing(result);
         }
 
+        @Override
+        protected Collection<? extends DandelionCache> getCaches() {
+            Collection<? extends Cache> caches = super.getCaches();
+            return caches.stream().map(cache->(DandelionCache)cache).collect(Collectors.toList());
+        }
     }
 }

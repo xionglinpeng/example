@@ -11,9 +11,9 @@ public class DistributedLockConfiguration {
 
 
     @Bean
-    public CacheLockInterceptor distributedLockAdvice(
+    public DandelionCacheInterceptor distributedLockAdvice(
             StringRedisTemplate redisTemplate){
-        CacheLockInterceptor interceptor = new CacheLockInterceptor();
+        DandelionCacheInterceptor interceptor = new DandelionCacheInterceptor();
         interceptor.setRedisTemplate(redisTemplate);
         //设置缓存操作源
         interceptor.setCacheOperationSource(cacheLockOperationSource());
@@ -29,7 +29,7 @@ public class DistributedLockConfiguration {
 
     @Bean
     public AnnotationCacheOperationSource cacheLockOperationSource(){
-        return new AnnotationCacheOperationSource(new CacheLockAnnotationParser());
+        return new AnnotationCacheOperationSource(new DandelionCacheAnnotationParser());
     }
 
 }
