@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-@Component
+//@Component
 public class BitMap implements CommandLineRunner {
 
     private static final String KEY = "bitmap";
@@ -50,7 +50,7 @@ public class BitMap implements CommandLineRunner {
 
 
         System.out.printf("签到字符串：%s。\n",1);
-        System.out.printf("今天签到天数：%d天。\n",signNumber());
+        System.out.printf("今天年签到天数：%d天。\n",signNumber());
         System.out.printf("今年第96天到200天签到%d天。\n",signNumber1());
         System.out.printf("今年签到的第一天是第%d天。\n",signFirstDay());
         System.out.printf("96天之后签到的第一天是第%d天。\n",signFirstDayAfter100Day());
