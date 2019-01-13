@@ -17,10 +17,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
-//@Component
+@Component
 public class BitMap implements CommandLineRunner {
 
     private static final String KEY = "bitmap";
@@ -41,30 +40,87 @@ public class BitMap implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
         setbit();
+        getbit();
+        bitCount1();
+        bitCount2();
+        bitpos1();
+        botpos2();
+        bitfield();
+        bitop();
+    }
 
-        for (byte b : operations.get(KEY).getBytes(StandardCharsets.UTF_8)) {
-            System.out.println(b+" = "+Integer.toBinaryString(b));
-        }
-
-
-        System.out.printf("签到字符串：%s。\n",1);
-        System.out.printf("今天年签到天数：%d天。\n",signNumber());
-        System.out.printf("今年第96天到200天签到%d天。\n",signNumber1());
-        System.out.printf("今年签到的第一天是第%d天。\n",signFirstDay());
-        System.out.printf("96天之后签到的第一天是第%d天。\n",signFirstDayAfter100Day());
-        Boolean isSign = operations.getBit(KEY, 200);
-        assert Objects.nonNull(isSign);
-        System.out.printf("第200天%s。\n",isSign?"签到了":"没有签到");
-
-        System.out.println();
+    /**
+     * 模拟一年365天用户签到记录，1表示签到，0表示未签到。
+     */
+    private void setbit(){
+        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+        Random random = new Random();
         for (int i = 0; i < 365; i++) {
-            Boolean bit = operations.getBit(KEY, i);
-            System.out.print(bit?1:0);
+            boolean b = random.nextBoolean();
+            operations.setBit("bitmap",i, b);
+            System.out.print(b?1:0);
         }
         System.out.println();
+    }
 
+    private void getbit(){
+        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+        for (int i = 0; i < 365; i++) {
+            Boolean bitmap = operations.getBit("bitmap", i);
+            assert bitmap != null;
+            System.out.print(bitmap?1:0);
+        }
+        System.out.println();
+    }
+
+    /**
+     * 查询今年全部的签到天数
+     */
+    private void bitCount1(){
+        Long days = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
+                connection.bitCount(stringRedisTemplate.getStringSerializer().serialize("bitmap"))
+        );
+        System.out.printf("今天年签到天数：%d天。\n", days);
+    }
+
+    /**
+     * 查询第96天到200天的签到天数。
+     * 注意：start和end是以字节为单位
+     */
+    private void bitCount2(){
+        Long execute = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
+                connection.bitCount(stringRedisTemplate.getStringSerializer().serialize("bitmap"),
+                        96 / 8, 200 / 8)
+        );
+        System.out.printf("今年第96天到200天签到%d天。\n", execute);
+    }
+
+
+    /**
+     * 查询今年签到的第一天
+     */
+    private void bitpos1(){
+        Long execute = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
+                connection.bitPos(stringRedisTemplate.getStringSerializer().serialize("bitmap"), true)
+        );
+        assert Objects.nonNull(execute);
+        System.out.printf("今年签到的第一天是第%d天。\n", ++execute);
+    }
+
+    /**
+     * 查询第96天之后签到的第一天
+     * 注意：range是以字节为基本单位
+     */
+    private void botpos2(){
+        Range<Long> range = Range.from(Range.Bound.inclusive(96/8L)).to(Range.Bound.inclusive(365/8L));
+        Long execute = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
+                connection.bitPos(stringRedisTemplate.getStringSerializer().serialize("bitmap"), true, range)
+        );
+        System.out.printf("96天之后签到的第一天是第%d天。\n", execute);
+    }
+
+    private void bitfield(){
         //从第三位开始（从0开始，包含第三位），取8为无符号数
         BitFieldSubCommands.BitFieldType uint8 = BitFieldSubCommands.BitFieldType.UINT_8;
         BitFieldSubCommands.Offset offset = BitFieldSubCommands.Offset.offset(3);
@@ -95,29 +151,15 @@ public class BitMap implements CommandLineRunner {
                 .incr(uint4).valueAt(offset2).overflow(wrap).by(1)
                 .get(uint4).valueAt(offset2);
 
-        System.err.println("bitfield "+KEY+" get "+uint8.asString()+" "+offset.getValue());
-        System.err.println("bitfield "+KEY+" set "+uint2.asString()+" "+offset20.getValue()+" "+5);
-        System.err.println("bitfield "+KEY+" overflow wrap incrby "+uint4.asString()+" "+offset2.getValue()+" "+1);
-        List<Long> longs = operations.bitField(KEY, bitFieldSubCommands);
+        System.err.println("bitfield bitmap get "+uint8.asString()+" "+offset.getValue());
+        System.err.println("bitfield bitmap set "+uint2.asString()+" "+offset20.getValue()+" "+5);
+        System.err.println("bitfield bitmap overflow wrap incrby "+uint4.asString()+" "+offset2.getValue()+" "+1);
+        List<Long> longs = stringRedisTemplate.opsForValue().bitField(KEY, bitFieldSubCommands);
         longs.forEach(l->{
             System.out.println(l+" : "+Integer.toBinaryString(l.intValue()));
         });
-        bitop();
     }
 
-    /**
-     * 模拟一年365天用户签到记录，1表示签到，0表示未签到。
-     */
-    private void setbit(){
-        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
-        Random random = new Random();
-        for (int i = 0; i < 365; i++) {
-            int b = random.nextInt(0B10);
-            operations.setBit("bitmap",i, b == 1);
-            System.out.print(b);
-        }
-        System.out.println();
-    }
 
     private void bitop(){
         ValueOperations<Object, Object> operations = redisTemplate.opsForValue();
@@ -192,44 +234,7 @@ public class BitMap implements CommandLineRunner {
         //CROSSSLOT Keys in request don't hash to the same slot
     }
 
-    /**
-     * bitCount
-     */
-    private Long signNumber(){
-        return stringRedisTemplate.execute((RedisCallback<Long>)  connection ->
-                connection.bitCount(KEY.getBytes(StandardCharsets.UTF_8))
-        );
-    }
 
-    /**
-     * bitCount
-     */
-    private Long signNumber1(){
-        return stringRedisTemplate.execute((RedisCallback<Long>)  connection ->
-                connection.bitCount(KEY.getBytes(StandardCharsets.UTF_8),96/8,200/8)
-        );
-    }
-
-    /**
-     * bitPos
-     */
-    private Long signFirstDay(){
-        Long execute = stringRedisTemplate.execute((RedisCallback<Long>) connection ->
-            connection.bitPos(KEY.getBytes(StandardCharsets.UTF_8), true)
-        );
-        assert Objects.nonNull(execute);
-        return ++execute;
-    }
-
-    /**
-     * bitPos
-     */
-    private Long signFirstDayAfter100Day(){
-        Range<Long> range = Range.from(Range.Bound.inclusive(96/8L)).to(Range.Bound.inclusive(365/8L));
-        return stringRedisTemplate.execute((RedisCallback<Long>)  connection ->
-                connection.bitPos(KEY.getBytes(StandardCharsets.UTF_8),true,range)
-        );
-    }
 
 
 

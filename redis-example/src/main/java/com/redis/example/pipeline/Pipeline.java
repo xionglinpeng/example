@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+//@Component
 public class Pipeline implements ApplicationRunner {
 
     @Autowired

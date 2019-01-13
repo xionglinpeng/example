@@ -12,6 +12,8 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 public class RedisExampleApplication {
 
     public static void main(String[] args) {
+        SpringApplication.run(RedisExampleApplication.class,null)；
+
         SpringApplication app = new SpringApplication(RedisExampleApplication.class);
         app.setBannerMode(Banner.Mode.CONSOLE);
         ConfigurableApplicationContext context = app.run(args);
