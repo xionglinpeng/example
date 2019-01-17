@@ -1,12 +1,12 @@
 package com.xlp.example.rabbitmq;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.MessageProperties;
+import com.rabbitmq.client.*;
 import org.omg.CORBA.TRANSACTION_MODE;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RabbitProducer {
 
@@ -38,10 +38,51 @@ public class RabbitProducer {
         channel.queueBind(QUEUE_NAME,EXCHANGE_NAME,ROUTING_KEY);
         //发送消息
         String message = "Hello Wrold!";
-        channel.basicPublish(EXCHANGE_NAME,ROUTING_KEY, MessageProperties.PERSISTENT_TEXT_PLAIN,message.getBytes());
+//        channel.basicPublish(EXCHANGE_NAME,ROUTING_KEY, MessageProperties.PERSISTENT_TEXT_PLAIN,message.getBytes());
+
+
+        //参数
+        Map<String,Object> arguments = new HashMap<>();
+        arguments.put("alternate-exchange","myAe");//备份交换器
+
+        channel.exchangeDeclare("normalExchange","direct",true,false,arguments);
+        channel.queueDeclare("normalQueue",true,false,false,null);
+        channel.queueBind("normalQueue","normalExchange","normalKey",null);
+
+        channel.exchangeDeclare("myAe","fanout",true,false,null);
+        channel.queueDeclare("unroutedQueue",true,false,false,null);
+        channel.queueBind("unroutedQueue","myAe","",null);
+
+
+        channel.basicPublish("normalExchange",ROUTING_KEY,true, MessageProperties.PERSISTENT_TEXT_PLAIN,message.getBytes());
+        channel.addReturnListener(new ReturnListener() {
+            @Override
+            public void handleReturn(int replyCode, String replyText, String exchange, String routingKey, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String message = new String(body);
+                System.out.println("Basic Return返回的结果是："+message);
+            }
+        });
+
+
+
+
+        //exchange：
+        //type：
+        //durable：
+        //autoDelete：
+        //argument：
+
+        //queue
+        //durable
+        //exclusive
+        //autoDelete
+        //arguments
+
+
+
         //关闭资源
-        channel.close();
-        connection.close();
+//        channel.close();
+//        connection.close();
     }
 
     
