@@ -8,18 +8,22 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.keyvalue.annotation.KeySpace;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
+import org.springframework.data.redis.core.index.Indexed;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @Data
 @TypeAlias("xlp:person")
-@RedisHash(value = "{people}",timeToLive = 1000)
-@KeySpace("{people:keyspace}")
+@RedisHash(value = "people",timeToLive = 1000)
+//@KeySpace("{people:keyspace}")
 public class Person {
 
     @Id
     String id;
 
+//    @Indexed
     String firstname;
 
     String lastname;
@@ -28,6 +32,13 @@ public class Person {
 
     @Reference(Person.class)
     private String reference;
+
+    @Indexed
+    Map<String,String> attributes;
+    @Indexed
+    Map<String,Person> relatives;
+    @Indexed
+    List<Address> addresses;
 
     @TimeToLive
     private long expiretion = 120L;
