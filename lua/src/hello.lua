@@ -23,6 +23,10 @@ print("==================================Lua变量==============================
 
 a = 10 -- 全局变量
 local b = 10 -- 局部变量
+a = "hello".." world!"
+a,b = 1,2
+-- 交换变量，会先计算右边所有的值，再进行赋值操作
+a,b = b,a
 
 
 --[[流程控制]]
@@ -30,3 +34,32 @@ print("==================================流程控制===========================
 if (0) then
    print("0为true")
 end
+
+print("==================================Lua函数=======================================")
+function max(num1,num2)
+   if num1 > num2 then
+      return num1
+   else
+      return num2
+   end
+end
+-- 多返回值
+print(max(100,2))
+
+-- 可变参数
+
+
+require "luasql.mysql"
+
+env = luasql.mysql()
+print(env)
+conn = env:connect("third-eye","root","6550d276f2ef3748","192.168.1.193",3306)
+conn:execute"SET NAMES UTF8"
+print(conn)
+cur = conn:execute("SELECT * FROM organization");
+row = cur:fetch({},"A")
+while row do
+   print(row.id)
+   row = cur:fetch({},"A")
+end
+conn.close()
