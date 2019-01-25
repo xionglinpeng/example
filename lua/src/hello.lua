@@ -27,7 +27,31 @@ a = "hello".." world!"
 a,b = 1,2
 -- 交换变量，会先计算右边所有的值，再进行赋值操作
 a,b = b,a
+print("==================================Lua循环=======================================")
 
+for i = 1, 10, 3 do
+   print(i)
+end
+
+
+function f(x)
+   return 2*x
+end
+for i = 1, f(5), 2 do
+   print(i)
+end
+
+
+
+
+days={"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"}
+for i, v in ipairs(days) do
+   print(i.."="..v)
+end
+
+for i, v in pairs(days) do
+   print(i.."="..v)
+end
 
 --[[流程控制]]
 print("==================================流程控制=======================================")
@@ -45,21 +69,26 @@ function max(num1,num2)
 end
 -- 多返回值
 print(max(100,2))
+function sd()
+   return 1,2
+end
+print(sd())
+
 
 -- 可变参数
 
 
-require "luasql.mysql"
-
-env = luasql.mysql()
-print(env)
-conn = env:connect("third-eye","root","6550d276f2ef3748","192.168.1.193",3306)
-conn:execute"SET NAMES UTF8"
-print(conn)
-cur = conn:execute("SELECT * FROM organization");
-row = cur:fetch({},"A")
-while row do
-   print(row.id)
-   row = cur:fetch({},"A")
-end
-conn.close()
+--require "luasql.mysql"
+--
+--env = luasql.mysql()
+--print(env)
+--conn = env:connect("third-eye","root","6550d276f2ef3748","192.168.1.193",3306)
+--conn:execute"SET NAMES UTF8"
+--print(conn)
+--cur = conn:execute("SELECT * FROM organization");
+--row = cur:fetch({},"A")
+--while row do
+--   print(row.id)
+--   row = cur:fetch({},"A")
+--end
+--conn.close()
