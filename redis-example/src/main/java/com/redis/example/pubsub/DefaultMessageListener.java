@@ -7,7 +7,7 @@ public class DefaultMessageListener implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
-        System.out.println(message);
-        System.out.println(new String(pattern));
+        System.out.printf("message = %s\n",message);
+        System.out.printf("channel = %s\n",new String(pattern));
     }
 }
