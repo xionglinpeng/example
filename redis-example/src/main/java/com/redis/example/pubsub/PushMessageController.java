@@ -16,6 +16,7 @@ public class PushMessageController {
     @GetMapping
     public boolean s(String message){
         redisTemplate.convertAndSend("hello",message);
+
         return true;
     }
 }
