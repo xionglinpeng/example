@@ -1,14 +1,13 @@
-package com.example.spring;
+package com.redis.example.pubsub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 @SpringBootApplication
-public class Application {
+public class PubSubApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(PubSubApplication.class,args);
     }
-
 }
-
