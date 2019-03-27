@@ -3,10 +3,7 @@ package com.redis.example.pipeline;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
@@ -14,8 +11,9 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
-//@Component
+@Component
 public class Pipeline implements ApplicationRunner {
 
     @Autowired
@@ -49,6 +47,17 @@ public class Pipeline implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+
+        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+        HashOperations<String, Object, Object> hashOperations = stringRedisTemplate.opsForHash();
+        Random random = new Random();
+        for (String id : ids) {
+//            operations.set(id, random.nextInt()+"");
+            hashOperations.put("{hash}"+id,id,random.nextInt()+"");
+        }
+
+
+
         useExecutePipelined();
         useExecutePipelined();
         notUsePipelined();
@@ -93,11 +102,13 @@ public class Pipeline implements ApplicationRunner {
      */
     public void usePipelined(){
         long startTime = System.currentTimeMillis();
-        stringRedisTemplate.executePipelined((RedisCallback<?>) connection -> {
+        List<Object> objects = stringRedisTemplate.executePipelined((RedisCallback<?>) connection -> {
             for (String id : ids)
-                connection.get(stringRedisSerializer.serialize(id));
+                connection.hGet(stringRedisSerializer.serialize("{hash}"+id),stringRedisSerializer.serialize(id));
+//                connection.get(stringRedisSerializer.serialize(id));
             return null;
-        },genericJackson2JsonRedisSerializer);
+        });
+        System.out.println(" =  "+objects);
         System.out.println("use pipelined : "+
                 (System.currentTimeMillis() - startTime)+" ms");
     }

@@ -41,7 +41,7 @@ public class Person {
     List<Address> addresses;
 
     @TimeToLive
-    private long expiretion = 120L;
+    private long expiretion = 1200000L;
 
     @TimeToLive
     public long getTimeToLive() {

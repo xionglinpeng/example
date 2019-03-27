@@ -20,7 +20,7 @@ import java.util.List;
 @Configuration
 public class RedisRepositoriesConfig {
 
-    @Bean
+//    @Bean
     public RedisCustomConversions redisCustomConversions(){
         List<Converter> converters = Arrays.asList(
                 new AddressToBytesConverter(),

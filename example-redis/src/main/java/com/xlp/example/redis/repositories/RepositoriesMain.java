@@ -46,8 +46,8 @@ public class RepositoriesMain {
         person.setAddresses(addresses);
 
         // saving Person object
-        Person pers = personRepository.save(person);
-        System.out.println(pers);
+//        Person pers = personRepository.save(person);
+//        System.out.println(pers);
 
 //        try {
 //            Thread.sleep(5000);
@@ -55,11 +55,11 @@ public class RepositoriesMain {
 //            e.printStackTrace();
 //        }
 
-        Optional<Person> optionalPerson = personRepository.findById(person.getId());
-        System.out.println(optionalPerson.get());
+//        Optional<Person> optionalPerson = personRepository.findById(person.getId());
+//        System.out.println(optionalPerson.get());
 
-        long count = personRepository.count();
-        System.out.println(count);
+//        long count = personRepository.count();
+//        System.out.println(count);
 
 //        personRepository.delete(person);
     }
