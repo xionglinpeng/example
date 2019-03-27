@@ -4,12 +4,18 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
 
+<!--        <bean id="messageService1" class="com.xlp.example.MessageServiceImpl" parent="" depends-on="" scope="prototype">
+
+        </bean>-->
+
         <bean id="messageService" class="com.xlp.example.MessageServiceImpl">
-    <!--            <meta key="" value=""/>
+                <!--
+                <meta key="" value=""/>
                 <lookup-method name=""/>
                 <replaced-method/>
                 <description/>
-                <qualifier></qualifier>-->
+                <qualifier></qualifier>
+                -->
         </bean>
 
 </beans>
