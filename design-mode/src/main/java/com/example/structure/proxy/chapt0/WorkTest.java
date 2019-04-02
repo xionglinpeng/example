@@ -11,7 +11,7 @@ public class WorkTest {
         proxyWork.startWork();
 
 
-        byte[] as = ProxyGenerator.generateProxyClass("a2", WorkImpl.class.getInterfaces());
+        byte[] as = ProxyGenerator.generateProxyClass("a", WorkImpl.class.getInterfaces());
 //        try (FileOutputStream fos = new FileOutputStream("C:\\Users\\dandelion\\Desktop\\a.class");){
 //            fos.write(as);
 //        }

@@ -17,4 +17,6 @@ public class WorkImpl implements IWork {
     public void saveWork(String work) {
         System.out.println("save work : engineer.");
     }
+
+
 }
