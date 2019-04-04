@@ -18,7 +18,7 @@ public interface IWork {
     重新标记（CMS remark）Stop The World
     并发清除（CMS concurrent sweep）
 
-    CMS收集器，
+    CMS收集器
 
     - CMS收集器对CPU资源非常敏感，CMS收集器并发阶段默认启动的回收线程数是(CPU数量+3)/4，虽然不会导致用户线程停顿，但是会
         因为占用了一部分线程资源，而导致应用程序变慢，随着CPU数量越少，对用户线程影响越大。
